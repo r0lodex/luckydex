@@ -17,7 +17,7 @@ app.api.cors = True
 
 def render(file, context):
     return Environment(
-        loader=FileSystemLoader("chalicelib/html")).get_template(file).render(context)
+        loader=FileSystemLoader("chalicelib/templates")).get_template(file).render(context)
 
 
 # Initialize Google Sheets client
