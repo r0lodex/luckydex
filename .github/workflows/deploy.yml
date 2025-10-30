@@ -90,10 +90,12 @@ jobs:
         run: |
           FUNCTION_NAME="luckydex-staging"
           ENV_VARS=$(jq -n \
+            --arg STAGE 'staging' \
             --arg GOOGLE_SHEETS_CREDENTIALS '${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}' \
             --arg GOOGLE_SPREADSHEET_ID '${{ secrets.GOOGLE_SPREADSHEET_ID }}' \
             --arg GOOGLE_SHEET_NAME '${{ vars.GOOGLE_SHEET_NAME }}' \
             '{Variables:{
+              STAGE:$STAGE,
               GOOGLE_SHEETS_CREDENTIALS:$GOOGLE_SHEETS_CREDENTIALS,
               GOOGLE_SPREADSHEET_ID:$GOOGLE_SPREADSHEET_ID,
               GOOGLE_SHEET_NAME:$GOOGLE_SHEET_NAME
