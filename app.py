@@ -54,13 +54,10 @@ def home():
     that calls /luckydex to draw a random number and display it.
     """
     # Get the API URL from environment or use the current request
-    api_url = os.environ.get('API_URL', '')
-    if not api_url and hasattr(app.current_request, 'context'):
-        # Try to construct from the current request context
-        api_url = ''
+    stage = os.environ.get('STAGE', '')
 
     # Render the Jinja template
-    content = render("home.html", {'api_url': api_url})
+    content = render("home.html", {'api_url': stage})
 
     return Response(
         body=content,
