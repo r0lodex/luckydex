@@ -7,6 +7,8 @@ This module handles reading data from Google Sheets.
 import os
 import json
 import random
+import pytz
+from datetime import datetime
 from typing import Dict, List, Optional
 import gspread
 from google.oauth2.service_account import Credentials
@@ -31,7 +33,7 @@ class SheetsClient:
                 # Parse JSON from environment variable
                 creds_dict = json.loads(creds_json)
                 scopes = [
-                    'https://www.googleapis.com/auth/spreadsheets.readonly',
+                    'https://www.googleapis.com/auth/spreadsheets',
                     'https://www.googleapis.com/auth/drive.readonly'
                 ]
                 credentials = Credentials.from_service_account_info(
@@ -162,4 +164,163 @@ class SheetsClient:
 
         records = worksheet.get_all_records()
         return records
+
+
+    def _get_or_create_worksheet(self, name: str, headers: Optional[List[str]] = None):
+        """Get a worksheet by name, creating it with optional headers if missing."""
+        if not self.client:
+            raise ValueError("Google Sheets client not initialized")
+
+        spreadsheet = self._get_spreadsheet()
+        try:
+            return spreadsheet.worksheet(name)
+        except Exception:
+            # Create worksheet with at least one row for headers if provided
+            worksheet = spreadsheet.add_worksheet(title=name, rows=1000, cols=10)
+            if headers:
+                worksheet.append_row(headers)
+            return worksheet
+
+
+    def save_winner(self, entry: Dict, winners_sheet_name: Optional[str] = None) -> bool:
+        """
+        Save a winner entry to the winners sheet.
+
+        Args:
+            entry: Dict with keys id, number, name, description
+            winners_sheet_name: Target sheet name for winners (defaults to env or 'Winners')
+
+        Returns:
+            True if saved successfully, False otherwise
+        """
+        if not self.client:
+            # In non-configured environments, skip persistence gracefully
+            return False
+
+        winners_name = (
+            winners_sheet_name
+            or os.environ.get('GOOGLE_WINNERS_SHEET_NAME')
+            or 'Winners'
+        )
+
+        headers = [
+            'timestamp',
+            'id',
+            'number',
+            'name',
+            'description',
+        ]
+
+        try:
+            worksheet = self._get_or_create_worksheet(winners_name, headers=headers)
+            myt = pytz.timezone('Asia/Kuala_Lumpur')
+            timestamp = datetime.now(myt).strftime('%Y-%m-%d %H:%M:%S')
+            row = [
+                timestamp,
+                entry.get('id', ''),
+                entry.get('number', ''),
+                entry.get('name', ''),
+                entry.get('description', ''),
+            ]
+            worksheet.append_row(row)
+            return True
+        except Exception as e:
+            print(f"Error saving winner to Google Sheets: {e}")
+            return False
+
+
+    def get_winners(self, winners_sheet_name: Optional[str] = None) -> List[Dict]:
+        """
+        Return all winners from the winners sheet.
+
+        Args:
+            winners_sheet_name: Target sheet name for winners (defaults to env or 'Winners')
+
+        Returns:
+            List of winner dicts
+        """
+        if not self.client:
+            return []
+
+        winners_name = (
+            winners_sheet_name
+            or os.environ.get('GOOGLE_WINNERS_SHEET_NAME')
+            or 'Winners'
+        )
+
+        try:
+            worksheet = self._get_or_create_worksheet(winners_name)
+            # If headers exist, get_all_records returns list[dict]
+            records = worksheet.get_all_records()
+            return records
+        except Exception as e:
+            print(f"Error reading winners from Google Sheets: {e}")
+            return []
+
+
+    def get_winner_ids(self, winners_sheet_name: Optional[str] = None) -> List[str]:
+        """Return a list of winner IDs (as strings) from the winners sheet."""
+        winners = self.get_winners(winners_sheet_name)
+        ids: List[str] = []
+        for w in winners:
+            # Normalize id; fall back to number if id missing
+            raw_id = w.get('id') or w.get('ID') or w.get('number') or w.get('Number')
+            if raw_id is not None and raw_id != '':
+                ids.append(str(raw_id))
+        return ids
+
+
+    def get_unique_random_entry(
+        self,
+        sheet_name: Optional[str] = None,
+        winners_sheet_name: Optional[str] = None
+    ) -> Dict:
+        """
+        Get a random entry that has not won before.
+
+        Raises ValueError if no eligible entries remain.
+        """
+        if not self.client:
+            # Fallback to mock when client not initialized
+            return self._get_mock_entry()
+
+        # Collect previous winner IDs
+        prior_ids = set(self.get_winner_ids(winners_sheet_name))
+
+        spreadsheet = self._get_spreadsheet()
+        # Select worksheet
+        if sheet_name:
+            worksheet = spreadsheet.worksheet(sheet_name)
+        else:
+            worksheet = spreadsheet.get_worksheet(0)
+
+        records = worksheet.get_all_records()
+        if not records:
+            raise ValueError("Spreadsheet is empty")
+
+        # Filter out records whose id/number already won
+        eligible: List[Dict] = []
+        for r in records:
+            candidate_id = r.get('id', r.get('ID', None))
+            candidate_fallback = r.get('number', r.get('Number', None))
+            identifier = candidate_id if candidate_id not in (None, '') else candidate_fallback
+            if identifier is None or identifier == '':
+                # If no identifier, allow it to be drawn once
+                eligible.append(r)
+                continue
+            if str(identifier) not in prior_ids:
+                eligible.append(r)
+
+        if not eligible:
+            raise ValueError("No eligible entries remaining")
+
+        chosen = random.choice(eligible)
+        return {
+            'id': chosen.get('id', chosen.get('ID', '')),
+            'number': chosen.get('number', chosen.get('Number', '')),
+            'name': chosen.get('name', chosen.get('Name', '')),
+            'description': chosen.get('description', chosen.get('Description', '')),
+            'total_entries': len(records),
+            'eligible_entries': len(eligible)
+        }
 

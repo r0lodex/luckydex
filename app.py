@@ -75,8 +75,12 @@ def luckydex():
     try:
         sheet_name = os.environ.get('GOOGLE_SHEET_NAME')
 
-        # Get random entry from Google Sheets
-        entry = sheets_client.get_random_entry(sheet_name)
+        # Get a unique random entry (not previously a winner)
+        winners_sheet_name = os.environ.get('GOOGLE_WINNERS_SHEET_NAME')
+        entry = sheets_client.get_unique_random_entry(sheet_name, winners_sheet_name)
+
+        # Persist winner to winners sheet (best-effort)
+        saved = sheets_client.save_winner(entry, winners_sheet_name)
 
         return {
             'success': True,
@@ -85,15 +89,51 @@ def luckydex():
             'name': entry['name'],
             'description': entry['description'],
             'total_entries': entry.get('total_entries', 0),
-            'mock_data': entry.get('_mock_data', False)
+            'mock_data': entry.get('_mock_data', False),
+            'winner_saved': saved
         }
 
+    except ValueError as e:
+        # Common logical errors (e.g., no eligible entries)
+        return Response(
+            body={
+                'success': False,
+                'error': str(e),
+                'message': 'No eligible entries remaining'
+            },
+            status_code=409,
+            headers={'Content-Type': 'application/json'}
+        )
     except Exception as e:
         return Response(
             body={
                 'success': False,
                 'error': str(e),
                 'message': 'Failed to draw number from spreadsheet'
+            },
+            status_code=500,
+            headers={'Content-Type': 'application/json'}
+        )
+
+
+@app.route('/winners')
+def winners():
+    """
+    Returns the list of saved winners from the winners sheet.
+    """
+    try:
+        winners_sheet_name = os.environ.get('GOOGLE_WINNERS_SHEET_NAME')
+        data = sheets_client.get_winners(winners_sheet_name)
+        return {
+            'success': True,
+            'winners': data
+        }
+    except Exception as e:
+        return Response(
+            body={
+                'success': False,
+                'error': str(e),
+                'message': 'Failed to fetch winners'
             },
             status_code=500,
             headers={'Content-Type': 'application/json'}
