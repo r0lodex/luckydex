@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from chalice import Chalice, Response
 from jinja2 import Environment, FileSystemLoader
 from chalicelib.sheets import SheetsClient
@@ -16,9 +15,10 @@ app = Chalice(app_name='luckydex')
 # Enable CORS for the API endpoints
 app.api.cors = True
 
-# Initialize Jinja2 environment
-template_dir = Path(__file__).parent / 'templates'
-jinja_env = Environment(loader=FileSystemLoader(str(template_dir)))
+def render(file, context):
+    return Environment(
+        loader=FileSystemLoader("chalicelib/html")).get_template(file).render(context)
+
 
 # Initialize Google Sheets client
 sheets_client = SheetsClient()
@@ -60,11 +60,10 @@ def home():
         api_url = ''
 
     # Render the Jinja template
-    template = jinja_env.get_template('home.html')
-    html_content = template.render(api_url=api_url)
+    content = render("home.html", {'api_url': api_url})
 
     return Response(
-        body=html_content,
+        body=content,
         headers={'Content-Type': 'text/html'}
     )
 
