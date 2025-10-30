@@ -40,23 +40,7 @@ class SheetsClient:
                 )
                 self.client = gspread.authorize(credentials)
             else:
-                # Try to load from file (for local development)
-                creds_file = os.environ.get(
-                    'GOOGLE_SHEETS_CREDENTIALS_FILE',
-                    'google-credentials.json'
-                )
-                if os.path.exists(creds_file):
-                    scopes = [
-                        'https://www.googleapis.com/auth/spreadsheets.readonly',
-                        'https://www.googleapis.com/auth/drive.readonly'
-                    ]
-                    credentials = Credentials.from_service_account_file(
-                        creds_file,
-                        scopes=scopes
-                    )
-                    self.client = gspread.authorize(credentials)
-                else:
-                    print("Warning: No Google Sheets credentials found")
+                print("Warning: No Google Sheets credentials found")
 
         except Exception as e:
             print(f"Error initializing Google Sheets client: {e}")
@@ -90,7 +74,8 @@ class SheetsClient:
         Get a random entry from the specified sheet.
 
         Args:
-            sheet_name: Name of the sheet to read from. If None, uses the first sheet.
+            sheet_name: Name of the sheet to read from.
+            If None, uses the first sheet.
 
         Returns:
             Dict with keys: id, number, name, description
@@ -156,7 +141,8 @@ class SheetsClient:
         Get all entries from the specified sheet.
 
         Args:
-            sheet_name: Name of the sheet to read from. If None, uses the first sheet.
+            sheet_name: Name of the sheet to read from.
+            If None, uses the first sheet.
 
         Returns:
             List of dictionaries with entries

@@ -67,6 +67,7 @@ def home():
         headers={'Content-Type': 'text/html'}
     )
 
+
 @app.route('/luckydex')
 def luckydex():
     """
@@ -75,7 +76,6 @@ def luckydex():
     Returns a random row with the number and associated data.
     """
     try:
-        # Get the sheet name from environment variable or use default (first sheet)
         sheet_name = os.environ.get('GOOGLE_SHEET_NAME')
 
         # Get random entry from Google Sheets
