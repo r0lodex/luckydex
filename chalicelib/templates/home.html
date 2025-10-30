@@ -191,7 +191,7 @@
 
             try {
                 // Call the /luckydex endpoint
-                const response = await fetch('{{ api_url }}/luckydex', {
+                const response = await fetch('{{ api_url }}/staging/luckydex', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
@@ -222,11 +222,11 @@
 
             } catch (error) {
                 console.error('Error drawing number:', error);
-                
+
                 // Show error message
                 errorMessage.textContent = `Error: ${error.message}. Please check your Google Sheets configuration.`;
                 errorMessage.classList.add('show');
-                
+
                 // Reset result display
                 resultContent.innerHTML = '<p class="placeholder-text">Failed to draw number</p>';
             } finally {
