@@ -57,7 +57,7 @@ def home():
     stage = os.environ.get('STAGE', '')
 
     # Render the Jinja template
-    content = render("home.html", {'api_url': f'{stage}/'})
+    content = render("home.html", {'api_url': stage})
 
     return Response(
         body=content,
