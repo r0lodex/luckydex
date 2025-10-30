@@ -15,6 +15,7 @@ app = Chalice(app_name='luckydex')
 # Enable CORS for the API endpoints
 app.api.cors = True
 
+
 def render(file, context):
     return Environment(
         loader=FileSystemLoader("chalicelib/templates")).get_template(file).render(context)
@@ -65,7 +66,7 @@ def home():
     )
 
 
-@app.route('/luckydex', cors=True, methods=['GET', 'OPTIONS'])
+@app.route('/luckydex', cors=True, methods=['GET'])
 def luckydex():
     """
     Luckydex endpoint that draws a random entry from a Google Spreadsheet.
@@ -126,7 +127,7 @@ def luckydex():
         )
 
 
-@app.route('/winners', cors=True, methods=['GET', 'OPTIONS'])
+@app.route('/winners', cors=True, methods=['GET'])
 def winners():
     """
     Returns the list of saved winners from the winners sheet.
