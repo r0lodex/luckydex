@@ -65,7 +65,7 @@ def home():
     )
 
 
-@app.route('/luckydex')
+@app.route('/luckydex', cors=True, methods=['GET', 'OPTIONS'])
 def luckydex():
     """
     Luckydex endpoint that draws a random entry from a Google Spreadsheet.
@@ -102,7 +102,12 @@ def luckydex():
                 'message': 'No eligible entries remaining'
             },
             status_code=409,
-            headers={'Content-Type': 'application/json'}
+            headers={
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
         )
     except Exception as e:
         return Response(
@@ -112,11 +117,16 @@ def luckydex():
                 'message': 'Failed to draw number from spreadsheet'
             },
             status_code=500,
-            headers={'Content-Type': 'application/json'}
+            headers={
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
         )
 
 
-@app.route('/winners')
+@app.route('/winners', cors=True, methods=['GET', 'OPTIONS'])
 def winners():
     """
     Returns the list of saved winners from the winners sheet.
@@ -136,5 +146,10 @@ def winners():
                 'message': 'Failed to fetch winners'
             },
             status_code=500,
-            headers={'Content-Type': 'application/json'}
+            headers={
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
         )
