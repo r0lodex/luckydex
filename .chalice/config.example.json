@@ -1,0 +1,40 @@
+{
+  "version": "2.0",
+  "app_name": "luckydex",
+  "stages": {
+    "dev": {
+      "api_gateway_stage": "dev",
+      "autogen_policy": true,
+      "environment_variables": {
+        "STAGE": "dev",
+        "GOOGLE_SHEETS_CREDENTIALS": "{\"type\":\"service_account\",\"project_id\":\"your-project\",...}",
+        "GOOGLE_SPREADSHEET_ID": "your_spreadsheet_id_here",
+        "GOOGLE_SHEET_NAME": "Sheet1",
+        "API_URL": "https://your-api-id.execute-api.us-east-1.amazonaws.com/api"
+      }
+    },
+    "staging": {
+      "api_gateway_stage": "staging",
+      "autogen_policy": true,
+      "environment_variables": {
+        "STAGE": "staging",
+        "GOOGLE_SHEETS_CREDENTIALS": "{\"type\":\"service_account\",\"project_id\":\"your-project\",...}",
+        "GOOGLE_SPREADSHEET_ID": "your_spreadsheet_id_here",
+        "GOOGLE_SHEET_NAME": "Sheet1",
+        "API_URL": "https://your-api-id.execute-api.us-east-1.amazonaws.com/api"
+      }
+    },
+    "prod": {
+      "api_gateway_stage": "prod",
+      "autogen_policy": true,
+      "environment_variables": {
+        "STAGE": "prod",
+        "GOOGLE_SHEETS_CREDENTIALS": "{\"type\":\"service_account\",\"project_id\":\"your-project\",...}",
+        "GOOGLE_SPREADSHEET_ID": "your_spreadsheet_id_here",
+        "GOOGLE_SHEET_NAME": "Sheet1",
+        "API_URL": "https://your-api-id.execute-api.us-east-1.amazonaws.com/api"
+      }
+    }
+  }
+}
+
