@@ -231,13 +231,13 @@ class SheetsClient:
 
     def get_winners(self, winners_sheet_name: Optional[str] = None) -> List[Dict]:
         """
-        Return all winners from the winners sheet.
+        Return all winners from the winners sheet, sorted by timestamp (latest first).
 
         Args:
             winners_sheet_name: Target sheet name for winners (defaults to env or 'Winners')
 
         Returns:
-            List of winner dicts
+            List of winner dicts, sorted by timestamp in descending order (latest first)
         """
         if not self.client:
             return []
@@ -252,6 +252,17 @@ class SheetsClient:
             worksheet = self._get_or_create_worksheet(winners_name)
             # If headers exist, get_all_records returns list[dict]
             records = worksheet.get_all_records()
+
+            # Sort by timestamp in descending order (latest first)
+            # Handle different possible timestamp field names
+            def get_timestamp(record: Dict) -> str:
+                ts = record.get('timestamp') or record.get('Timestamp') or record.get('time') or ''
+                return ts
+
+            # Sort in descending order (latest first)
+            # Empty timestamps go to the end
+            records.sort(key=lambda r: get_timestamp(r) or '', reverse=True)
+
             return records
         except Exception as e:
             print(f"Error reading winners from Google Sheets: {e}")
