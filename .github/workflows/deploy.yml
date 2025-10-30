@@ -89,12 +89,10 @@ jobs:
       - name: Update Lambda environment variables
         run: |
           FUNCTION_NAME="luckydex-staging"
-          printf "%s" '${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}' > creds.json
-          COMPACT_CREDS=$(jq -c . creds.json)
           ENV_VARS=$(jq -n \
-            --arg GOOGLE_SHEETS_CREDENTIALS "$COMPACT_CREDS" \
-            --arg GOOGLE_SPREADSHEET_ID "${{ secrets.GOOGLE_SPREADSHEET_ID }}" \
-            --arg GOOGLE_SHEET_NAME "${{ vars.GOOGLE_SHEET_NAME }}" \
+            --arg GOOGLE_SHEETS_CREDENTIALS '${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}' \
+            --arg GOOGLE_SPREADSHEET_ID '${{ secrets.GOOGLE_SPREADSHEET_ID }}' \
+            --arg GOOGLE_SHEET_NAME '${{ vars.GOOGLE_SHEET_NAME }}' \
             '{Variables:{
               GOOGLE_SHEETS_CREDENTIALS:$GOOGLE_SHEETS_CREDENTIALS,
               GOOGLE_SPREADSHEET_ID:$GOOGLE_SPREADSHEET_ID,
