@@ -6,7 +6,7 @@
     <title>Luckydex - Random Number Draw</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-5 relative overflow-hidden">
+<body class="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-5 relative overflow-scroll">
     {% include 'sparkles.html' %}
 
     <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
@@ -15,7 +15,7 @@
             <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
             <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p>
 
-            <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] flex flex-row items-center justify-center transition gold-glow">
+            <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] overflow-y-auto flex flex-col items-center justify-center transition gold-glow">
                 <div id="resultContent" class="w-full">
                     <p class="text-white/90 text-xl text-center">Click the button below to draw a number</p>
                 </div>
@@ -248,7 +248,7 @@
                             }
                         }
                         resultContent.innerHTML = `
-                            <div class="w-full">
+                            <div class="flex flex-wrap gap-4 justify-center items-center w-full">
                                 ${displayNumbers.join('')}
                             </div>
                         `;
@@ -291,7 +291,7 @@
                         `);
                     }
                     resultContent.innerHTML = `
-                        <div>
+                        <div class="flex flex-wrap gap-4 justify-center items-center">
                             ${displayNumbers.join('')}
                         </div>
                     `;
@@ -303,11 +303,13 @@
                 // Final display with all numbers revealed
                 resultContainer.classList.remove('container-drawing');
                 resultContent.innerHTML = `
-                    ${results.map((data) => `
-                        <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
-                            ${data.number}
-                        </div>
-                    `).join('')}
+                    <div class="flex flex-wrap gap-4 justify-center items-center">
+                        ${results.map((data) => `
+                            <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
+                                ${data.number}
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
 
                 // Add dramatic reveal effect
@@ -340,7 +342,7 @@
                 if (results.length > 0) {
                     resultContent.innerHTML = `
                         <div class="w-full">
-                            <div class="mb-3">
+                            <div class="flex flex-wrap gap-4 justify-center items-center mb-3">
                                 ${results.map((data) => `
                                     <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
                                         ${data.number}
