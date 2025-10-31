@@ -17,22 +17,22 @@
 
             <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] overflow-y-auto flex flex-col items-center justify-center transition gold-glow">
                 <div id="resultContent" class="w-full">
-                    <p class="text-white/90 text-xl text-center">Draw a number</p>
+                    <p class="text-white/90 text-xl text-center font-mono">Draw a number</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <button id="drawButton" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawNumber()">
-                    🎲 Draw One
+                <button id="drawButton" class="font-mono gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawNumber()">
+                    Draw One (1)
                 </button>
-                <button id="draw3Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(3)">
-                    🎯 Draw Three
+                <button id="draw3Button" class="font-mono gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(3)">
+                    Draw Three (3)
                 </button>
-                <button id="draw5Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(5)">
-                    🎯 Draw Five
+                <button id="draw5Button" class="font-mono gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(5)">
+                    Draw Five (5)
                 </button>
-                <button id="draw10Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(10)">
-                    🎯 Draw Ten
+                <button id="draw10Button" class="font-mono gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(10)">
+                    Draw Ten (10)
                 </button>
             </div>
 
@@ -75,10 +75,10 @@
 
         function enableAllButtons() {
             const buttons = getAllDrawButtons();
-            if (buttons.drawOne) buttons.drawOne.textContent = '🎲 Draw One';
-            if (buttons.drawThree) buttons.drawThree.textContent = '🎯 Draw Three';
-            if (buttons.drawFive) buttons.drawFive.textContent = '🎯 Draw Five';
-            if (buttons.drawTen) buttons.drawTen.textContent = '🎯 Draw Ten';
+            if (buttons.drawOne) buttons.drawOne.textContent = 'Draw One (1)';
+            if (buttons.drawThree) buttons.drawThree.textContent = 'Draw Three (3)';
+            if (buttons.drawFive) buttons.drawFive.textContent = 'Draw Five (5)';
+            if (buttons.drawTen) buttons.drawTen.textContent = 'Draw Ten (10)';
             Object.values(buttons).forEach(btn => {
                 if (btn) btn.disabled = false;
             });
@@ -92,7 +92,7 @@
 
             // Disable all buttons and show loading state
             disableAllButtons();
-            button.textContent = '🎲 Drawing...';
+            button.textContent = 'Drawing...';
             resultContainer.classList.add('container-drawing');
             errorMessage.classList.add('hidden');
 
@@ -195,9 +195,9 @@
             const buttons = getAllDrawButtons();
             let activeButton = null;
             const buttonLabels = {
-                3: { btn: buttons.drawThree, text: '🎯 Draw Three' },
-                5: { btn: buttons.drawFive, text: '🎯 Draw Five' },
-                10: { btn: buttons.drawTen, text: '🎯 Draw Ten' }
+                3: { btn: buttons.drawThree, text: 'Draw Three (3)' },
+                5: { btn: buttons.drawFive, text: 'Draw Five (5)' },
+                10: { btn: buttons.drawTen, text: 'Draw Ten (10)' }
             };
             
             if (buttonLabels[count]) {
@@ -210,7 +210,7 @@
             // Disable all buttons and show loading state
             disableAllButtons();
             if (activeButton) {
-                activeButton.textContent = `🎯 Drawing ${count}...`;
+                activeButton.textContent = `Drawing ${count}...`;
             }
             resultContainer.classList.add('container-drawing');
             errorMessage.classList.add('hidden');
@@ -240,7 +240,7 @@
                                 const letter = getSequenceLetter(j);
                                 displayNumbers.push(`
                                     <div class="text-7xl font-mono font-extrabold text-white reveal-glow" style="opacity: 1;">
-                                        ${letter}${results[j].number}
+                                        ${letter} ${results[j].number}
                                     </div>
                                 `);
                             } else {
@@ -248,7 +248,7 @@
                                 const letter = getSequenceLetter(j);
                                 displayNumbers.push(`
                                     <div class="text-7xl font-mono font-extrabold text-white drawing-animation">
-                                        ${letter}${randomNumbers[numIndex % randomNumbers.length]}
+                                        ${letter} ${randomNumbers[numIndex % randomNumbers.length]}
                                     </div>
                                 `);
                                 numIndex++;
@@ -294,7 +294,7 @@
                         const letter = getSequenceLetter(j);
                         displayNumbers.push(`
                             <div class="text-7xl font-mono font-extrabold text-white reveal-number reveal-glow">
-                                ${letter}${results[j].number}
+                                ${letter} ${results[j].number}
                             </div>
                         `);
                     }
@@ -316,7 +316,7 @@
                             const letter = getSequenceLetter(idx);
                             return `
                             <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
-                                ${letter}${data.number}
+                                ${letter} ${data.number}
                             </div>
                         `;
                         }).join('')}
@@ -358,7 +358,7 @@
                                     const letter = getSequenceLetter(idx);
                                     return `
                                     <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
-                                        ${letter}${data.number}
+                                        ${letter} ${data.number}
                                     </div>
                                 `;
                                 }).join('')}
