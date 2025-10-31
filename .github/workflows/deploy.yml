@@ -85,6 +85,23 @@ jobs:
           ENDPOINT=$(chalice url --stage staging)
           echo "endpoint-url=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "Deployed to: $ENDPOINT"
+          if [ -f .chalice/deployed.json ]; then
+            echo "::notice title=deployed.json::deployed.json generated after deployment"
+            echo ""
+            echo "=== .chalice/deployed.json ==="
+            cat .chalice/deployed.json
+            echo ""
+            echo "Please commit this file to maintain deployment state."
+          else
+            echo "::warning::.chalice/deployed.json not found after deployment"
+          fi
+
+      - name: Upload deployed.json artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-json
+          path: .chalice/deployed.json
+          if-no-files-found: ignore
 
       - name: Update Lambda environment variables
         run: |
@@ -103,25 +120,3 @@ jobs:
           aws lambda update-function-configuration \
             --function-name "$FUNCTION_NAME" \
             --environment "$ENV_VARS"
-
-      - name: Output deployed.json
-        if: always()
-        run: |
-          if [ -f .chalice/deployed.json ]; then
-            echo "::notice title=deployed.json::deployed.json generated after deployment"
-            echo ""
-            echo "=== .chalice/deployed.json ==="
-            cat .chalice/deployed.json
-            echo ""
-            echo "Please commit this file to maintain deployment state."
-          else
-            echo "::warning::.chalice/deployed.json not found after deployment"
-          fi
-
-      - name: Upload deployed.json artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployed-json
-          path: .chalice/deployed.json
-          if-no-files-found: ignore
