@@ -9,57 +9,110 @@
 <body class="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-5 relative overflow-hidden">
     {% include 'sparkles.html' %}
 
-    <div class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl max-w-xl w-full text-center relative z-10 gold-glow">
-        <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
-        <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p>
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+        <!-- Draw Section -->
+        <div class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl text-center gold-glow">
+            <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
+            <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p>
 
-        <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] overflow-y-auto flex flex-col items-center justify-center transition gold-glow">
-            <div id="resultContent" class="w-full">
-                <p class="text-white/90 text-xl text-center">Click the button below to draw a number</p>
+            <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] flex flex-row items-center justify-center transition gold-glow">
+                <div id="resultContent" class="w-full">
+                    <p class="text-white/90 text-xl text-center">Click the button below to draw a number</p>
+                </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button id="drawButton" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawNumber()">
+                    🎲 Draw One
+                </button>
+                <button id="draw3Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(3)">
+                    🎯 Draw Three
+                </button>
+                <button id="draw5Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(5)">
+                    🎯 Draw Five
+                </button>
+                <button id="draw10Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed w-full" onclick="drawMultipleNumbers(10)">
+                    🎯 Draw Ten
+                </button>
+            </div>
+
+            <div id="errorMessage" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mt-5"></div>
+
+            <p class="text-white/60 text-sm mt-5">
+                Remaining entries: <span id="remainingEntries">0</span>
+            </p>
         </div>
 
-        <div class="flex gap-3 justify-center items-center">
-            <button id="drawButton" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed" onclick="drawNumber()">
-                🎲 Draw Number
-            </button>
-            <button id="draw5Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed" onclick="draw4Numbers()">
-                🎯 Draw 5 Numbers
-            </button>
-        </div>
-
-        <div id="errorMessage" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mt-5"></div>
-
-        <p class="text-white/60 text-sm mt-5">
-            Each draw randomly selects a number from the connected Google Spreadsheet
-        </p>
-
-        <div id="winnersSection" class="mt-8 text-left">
-            <h2 class="text-xl font-semibold gold-text mb-2">🏆 Recent Winners</h2>
+        <!-- Winners Section -->
+        <div id="winnersSection" class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl relative z-10 gold-glow">
+            <h2 class="text-xl font-semibold gold-text mb-4 text-center">🏆 Recent Winners</h2>
             <div id="winnersError" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-3 rounded-lg mt-2"></div>
-            <ul id="winnersList" class="list-none pl-0">
-                <li class="text-white/60">No winners yet. Draw to see the first winner!</li>
-            </ul>
+            <div class="h-[600px] overflow-y-auto pr-2">
+                <ul id="winnersList" class="list-none pl-0 space-y-2">
+                    <li class="text-white/60">No winners yet. Draw to see the first winner!</li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <script>
+        // Helper function to manage all buttons
+        function getAllDrawButtons() {
+            return {
+                drawOne: document.getElementById('drawButton'),
+                drawThree: document.getElementById('draw3Button'),
+                drawFive: document.getElementById('draw5Button'),
+                drawTen: document.getElementById('draw10Button')
+            };
+        }
+
+        function disableAllButtons() {
+            const buttons = getAllDrawButtons();
+            Object.values(buttons).forEach(btn => {
+                if (btn) btn.disabled = true;
+            });
+        }
+
+        function enableAllButtons() {
+            const buttons = getAllDrawButtons();
+            if (buttons.drawOne) buttons.drawOne.textContent = '🎲 Draw One';
+            if (buttons.drawThree) buttons.drawThree.textContent = '🎯 Draw Three';
+            if (buttons.drawFive) buttons.drawFive.textContent = '🎯 Draw Five';
+            if (buttons.drawTen) buttons.drawTen.textContent = '🎯 Draw Ten';
+            Object.values(buttons).forEach(btn => {
+                if (btn) btn.disabled = false;
+            });
+        }
+
         async function drawNumber() {
             const button = document.getElementById('drawButton');
-            const draw5Button = document.getElementById('draw5Button');
             const resultContainer = document.getElementById('resultContainer');
             const resultContent = document.getElementById('resultContent');
             const errorMessage = document.getElementById('errorMessage');
 
-            // Disable buttons and show loading state
-            button.disabled = true;
-            draw5Button.disabled = true;
+            // Disable all buttons and show loading state
+            disableAllButtons();
             button.textContent = '🎲 Drawing...';
-            resultContainer.classList.add('animate-pulse');
+            resultContainer.classList.add('container-drawing');
             errorMessage.classList.add('hidden');
 
-            // Show spinner
-            resultContent.innerHTML = '<div class="w-12 h-12 rounded-full border-4 border-white/30 border-t-white animate-spin"></div>';
+            // Dramatic drawing animation - spinning 3-digit numbers
+            const randomNumbers = Array.from({length: 20}, () => {
+                const num = Math.floor(Math.random() * 1000);
+                return num.toString().padStart(3, '0');
+            });
+            let numIndex = 0;
+            const drawInterval = setInterval(() => {
+                resultContent.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-7xl font-mono font-extrabold text-white drawing-animation">
+                            ${randomNumbers[numIndex % randomNumbers.length]}
+                        </div>
+                        <p class="text-white/80 text-lg mt-4">Drawing your lucky number...</p>
+                    </div>
+                `;
+                numIndex++;
+            }, 150);
 
             try {
                 // Call the /luckydex endpoint
@@ -79,74 +132,130 @@
 
                 if (!response.ok || (data && data.success === false)) {
                     const message = (data && (data.message || data.error)) ? `${data.message || data.error}` : `HTTP ${response.status}`;
+                    clearInterval(drawInterval);
                     throw new Error(message);
                 }
 
-                // Display the result
+                // Clear the drawing animation
+                clearInterval(drawInterval);
+
+                // Dramatic reveal animation
+                resultContainer.classList.remove('container-drawing');
                 resultContent.innerHTML = `
                     <div class="text-center">
-                        <div class="text-5xl font-extrabold text-white mb-2">${data.number}</div>
-                        <div class="text-white/90 text-lg">${data.name || 'Lucky Number'}</div>
-                        ${data.description ? `<div class=\"text-white/80 text-sm mt-2\">${data.description}</div>` : ''}
-                        <div class="text-white/80 text-xs mt-4">
-                            ID: ${data.id} | Total entries: ${data.total_entries || 'N/A'}
+                        <div class="text-7xl font-mono font-extrabold text-white reveal-number reveal-glow mb-4">
+                            ${data.number}
                         </div>
                     </div>
                 `;
 
-                // Add success animation
-                resultContainer.style.transform = 'scale(1.05)';
+                // Add dramatic reveal effect
+                resultContainer.style.transform = 'scale(1.1)';
                 setTimeout(() => {
                     resultContainer.style.transform = 'scale(1)';
-                }, 200);
+                }, 800);
 
-                // Refresh winners after a successful draw
+                // Store total_entries for remaining count calculation
+                if (data.total_entries) {
+                    window.totalEntries = data.total_entries;
+                }
+
+                // Refresh winners and update remaining entries
                 fetchWinners();
+                updateRemainingEntries();
 
             } catch (error) {
                 console.error('Error drawing number:', error);
+
+                // Clear interval if still running
+                if (typeof drawInterval !== 'undefined') {
+                    clearInterval(drawInterval);
+                }
+                resultContainer.classList.remove('container-drawing');
 
                 // Show error message
                 errorMessage.textContent = `${error.message}`;
                 errorMessage.classList.remove('hidden');
 
                 // Reset result display
-                resultContent.innerHTML = '<p class="text-white/70 text-xl">Failed to draw number</p>';
+                resultContent.innerHTML = '<p class="text-white/70 text-xl text-center">Failed to draw number</p>';
             } finally {
                 // Re-enable buttons and remove loading state
-                button.disabled = false;
-                draw5Button.disabled = false;
-                button.textContent = '🎲 Draw Number';
-                resultContainer.classList.remove('animate-pulse');
+                enableAllButtons();
+                resultContainer.classList.remove('container-drawing', 'animate-pulse');
             }
         }
 
-        async function draw4Numbers() {
-            const button = document.getElementById('drawButton');
-            const draw5Button = document.getElementById('draw5Button');
+        async function drawMultipleNumbers(count) {
+            const buttons = getAllDrawButtons();
+            let activeButton = null;
+            const buttonLabels = {
+                3: { btn: buttons.drawThree, text: '🎯 Draw Three' },
+                5: { btn: buttons.drawFive, text: '🎯 Draw Five' },
+                10: { btn: buttons.drawTen, text: '🎯 Draw Ten' }
+            };
+            
+            if (buttonLabels[count]) {
+                activeButton = buttonLabels[count].btn;
+            }
             const resultContainer = document.getElementById('resultContainer');
             const resultContent = document.getElementById('resultContent');
             const errorMessage = document.getElementById('errorMessage');
 
-            // Disable buttons and show loading state
-            button.disabled = true;
-            draw5Button.disabled = true;
-            draw5Button.textContent = '🎯 Drawing 4...';
-            resultContainer.classList.add('animate-pulse');
+            // Disable all buttons and show loading state
+            disableAllButtons();
+            if (activeButton) {
+                activeButton.textContent = `🎯 Drawing ${count}...`;
+            }
+            resultContainer.classList.add('container-drawing');
             errorMessage.classList.add('hidden');
-
-            // Show spinner with progress
-            resultContent.innerHTML = '<div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full border-4 border-white/30 border-t-white animate-spin"></div><p class="text-white/80 text-sm">Drawing numbers...</p></div>';
 
             const results = [];
             let hasError = false;
             let errorMsg = '';
 
+            // Generate random 3-digit numbers for animation
+            const randomNumbers = Array.from({length: 20}, () => {
+                const num = Math.floor(Math.random() * 1000);
+                return num.toString().padStart(3, '0');
+            });
+            let numIndex = 0;
+
+            let drawInterval = null;
+
             try {
-                // Draw 5 numbers sequentially to ensure uniqueness
-                for (let i = 0; i < 4; i++) {
-                    // Update progress
-                    resultContent.innerHTML = `<div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full border-4 border-white/30 border-t-white animate-spin"></div><p class="text-white/80 text-sm">Drawing ${i + 1} of 5...</p></div>`;
+                // Draw numbers sequentially to ensure uniqueness
+                for (let i = 0; i < count; i++) {
+                    // Dramatic drawing animation for each number
+                    drawInterval = setInterval(() => {
+                        const displayNumbers = [];
+                        for (let j = 0; j <= i; j++) {
+                            if (j < results.length) {
+                                // Already drawn - show actual number
+                                displayNumbers.push(`
+                                    <div class="text-7xl font-mono font-extrabold text-white reveal-glow" style="opacity: 1;">
+                                        ${results[j].number}
+                                    </div>
+                                `);
+                            } else {
+                                // Currently drawing - show spinning number
+                                displayNumbers.push(`
+                                    <div class="text-7xl font-mono font-extrabold text-white drawing-animation">
+                                        ${randomNumbers[numIndex % randomNumbers.length]}
+                                    </div>
+                                `);
+                                numIndex++;
+                            }
+                        }
+                        resultContent.innerHTML = `
+                            <div class="w-full">
+                                ${displayNumbers.join('')}
+                            </div>
+                        `;
+                    }, 100);
+
+                    // Wait a bit for dramatic effect before fetching
+                    await new Promise(resolve => setTimeout(resolve, 800));
 
                     const response = await fetch('luckydex', {
                         method: 'GET',
@@ -163,47 +272,79 @@
                     }
 
                     if (!response.ok || (data && data.success === false)) {
+                        clearInterval(drawInterval);
                         const message = (data && (data.message || data.error)) ? `${data.message || data.error}` : `HTTP ${response.status}`;
                         throw new Error(message);
                     }
 
+                    // Clear the drawing animation for this number
+                    clearInterval(drawInterval);
                     results.push(data);
+
+                    // Dramatic reveal of the number
+                    const displayNumbers = [];
+                    for (let j = 0; j < results.length; j++) {
+                        displayNumbers.push(`
+                            <div class="text-7xl font-mono font-extrabold text-white reveal-number reveal-glow">
+                                ${results[j].number}
+                            </div>
+                        `);
+                    }
+                    resultContent.innerHTML = `
+                        <div>
+                            ${displayNumbers.join('')}
+                        </div>
+                    `;
+
+                    // Brief pause before next draw
+                    await new Promise(resolve => setTimeout(resolve, 300));
                 }
 
-                // Display all 5 results - just numbers
+                // Final display with all numbers revealed
+                resultContainer.classList.remove('container-drawing');
                 resultContent.innerHTML = `
-                    <div class="justify-center items-center gap-4">
-                        ${results.map((data) => `
-                            <div class="text-4xl font-extrabold text-white">${data.number}</div>
-                        `).join('')}
-                    </div>
+                    ${results.map((data) => `
+                        <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
+                            ${data.number}
+                        </div>
+                    `).join('')}
                 `;
 
-                // Add success animation
-                resultContainer.style.transform = 'scale(1.02)';
+                // Add dramatic reveal effect
+                resultContainer.style.transform = 'scale(1.05)';
                 setTimeout(() => {
                     resultContainer.style.transform = 'scale(1)';
-                }, 200);
+                }, 600);
 
-                // Refresh winners after successful draws
+                // Store total_entries from the first result if available
+                if (results.length > 0 && results[0].total_entries) {
+                    window.totalEntries = results[0].total_entries;
+                }
+
+                // Refresh winners and update remaining entries
                 fetchWinners();
+                updateRemainingEntries();
 
             } catch (error) {
-                console.error('Error drawing 4 numbers:', error);
+                console.error(`Error drawing ${count} numbers:`, error);
                 hasError = true;
                 errorMsg = error.message;
+                if (drawInterval) clearInterval(drawInterval);
+                resultContainer.classList.remove('container-drawing');
 
                 // Show error message
                 errorMessage.textContent = `Error drawing numbers: ${errorMsg}`;
                 errorMessage.classList.remove('hidden');
 
-                // If we got some results, show them, otherwise show error
+                // If we got some results, show them with reveal animation
                 if (results.length > 0) {
                     resultContent.innerHTML = `
                         <div class="w-full">
-                            <div class="flex justify-between items-center gap-4 mb-3">
+                            <div class="mb-3">
                                 ${results.map((data) => `
-                                    <div class="text-4xl font-extrabold text-white">${data.number}</div>
+                                    <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
+                                        ${data.number}
+                                    </div>
                                 `).join('')}
                             </div>
                             <p class="text-red-300 text-sm text-center">Failed to draw remaining numbers: ${errorMsg}</p>
@@ -214,10 +355,35 @@
                 }
             } finally {
                 // Re-enable buttons and remove loading state
-                button.disabled = false;
-                draw5Button.disabled = false;
-                draw5Button.textContent = '🎯 Draw 4 Numbers';
-                resultContainer.classList.remove('animate-pulse');
+                enableAllButtons();
+                resultContainer.classList.remove('container-drawing', 'animate-pulse');
+            }
+        }
+
+        async function updateRemainingEntries() {
+            const remainingEntriesEl = document.getElementById('remainingEntries');
+            if (!remainingEntriesEl) return;
+
+            // Get winners count
+            try {
+                const response = await fetch('winners', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                const winnersCount = (data && Array.isArray(data.winners)) ? data.winners.length : 0;
+
+                // Calculate remaining entries: total_entries - winners_count
+                if (window.totalEntries) {
+                    const remaining = Math.max(0, window.totalEntries - winnersCount);
+                    remainingEntriesEl.textContent = remaining;
+                } else {
+                    // Total entries not available yet - will be set after first draw
+                    remainingEntriesEl.textContent = '?';
+                }
+            } catch (error) {
+                console.error('Error calculating remaining entries:', error);
+                remainingEntriesEl.textContent = '?';
             }
         }
 
@@ -254,19 +420,21 @@
 
                 if (winners.length === 0) {
                     winnersList.innerHTML = '<li class="text-white/60">No winners yet. Draw to see the first winner!</li>';
-                    return;
+                } else {
+                    winnersList.innerHTML = winners.map((w, idx) => {
+                        const safeId = (w.id !== undefined && w.id !== null) ? w.id : '';
+                        const safeNumber = (w.number !== undefined && w.number !== null) ? w.number : '';
+                        const safeName = (w.name !== undefined && w.name !== null && String(w.name).trim() !== '') ? w.name : 'Winner';
+                        const safeDescription = (w.description !== undefined && w.description !== null && String(w.description).trim() !== '') ? ` — ${w.description}` : '';
+                        return `<li class=\"py-1.5 border-b border-[#d4af37]/20 text-white/90\">
+                            <span class=\"font-semibold font-mono text-[#ffd700]\">#${safeNumber}</span> · ${safeName}${safeDescription}
+                            ${safeId ? `<span class=\\\"text-white/50 text-sm font-mono\\\"> (ID: ${safeId})</span>` : ''}
+                        </li>`;
+                    }).join('');
                 }
 
-                winnersList.innerHTML = winners.map((w, idx) => {
-                    const safeId = (w.id !== undefined && w.id !== null) ? w.id : '';
-                    const safeNumber = (w.number !== undefined && w.number !== null) ? w.number : '';
-                    const safeName = (w.name !== undefined && w.name !== null && String(w.name).trim() !== '') ? w.name : 'Winner';
-                    const safeDescription = (w.description !== undefined && w.description !== null && String(w.description).trim() !== '') ? ` — ${w.description}` : '';
-                    return `<li class=\"py-1.5 border-b border-[#d4af37]/20 text-white/90\">
-                        <span class=\"font-semibold font-mono text-[#ffd700]\">#${safeNumber}</span> · ${safeName}${safeDescription}
-                        ${safeId ? `<span class=\\\"text-white/50 text-sm font-mono\\\"> (ID: ${safeId})</span>` : ''}
-                    </li>`;
-                }).join('');
+                // Update remaining entries after fetching winners
+                updateRemainingEntries();
             } catch (error) {
                 console.error('Error fetching winners:', error);
                 winnersError.textContent = `Could not load winners: ${error.message}`;
@@ -276,8 +444,11 @@
             }
         }
 
-        // Load winners on page load
-        window.addEventListener('load', fetchWinners);
+        // Load winners and remaining entries on page load
+        window.addEventListener('load', () => {
+            fetchWinners();
+            updateRemainingEntries();
+        });
     </script>
 </body>
 </html>
