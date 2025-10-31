@@ -5,67 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Luckydex - Random Number Draw</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes sparkle {
-            0%, 100% { opacity: 0.2; transform: scale(0.8); }
-            50% { opacity: 0.6; transform: scale(1.3); }
-        }
-        .sparkle {
-            animation: sparkle 3s ease-in-out infinite;
-        }
-        .gold-gradient {
-            background: linear-gradient(135deg, #d4af37 0%, #b8860b 50%, #ffd700 100%);
-        }
-        .gold-text {
-            background: linear-gradient(135deg, #ffd700 0%, #d4af37 50%, #b8860b 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .gold-glow {
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5), 0 0 40px rgba(212, 175, 55, 0.3);
-        }
-    </style>
 </head>
 <body class="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-5 relative overflow-hidden">
-    <!-- Sparkle particles background -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <!-- Small sparkles (0.5px - 1px) -->
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/40" style="top: 8%; left: 12%; width: 0.5px; height: 0.5px; animation-delay: 0s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/35" style="top: 15%; left: 85%; width: 0.75px; height: 0.75px; animation-delay: 0.3s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/45" style="top: 22%; left: 45%; width: 0.5px; height: 0.5px; animation-delay: 0.6s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#b8860b]/40" style="top: 35%; left: 18%; width: 0.75px; height: 0.75px; animation-delay: 0.9s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/30" style="top: 42%; left: 92%; width: 0.5px; height: 0.5px; animation-delay: 1.2s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/40" style="top: 58%; left: 7%; width: 0.75px; height: 0.75px; animation-delay: 1.5s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/35" style="top: 68%; left: 63%; width: 0.5px; height: 0.5px; animation-delay: 1.8s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#b8860b]/40" style="top: 78%; left: 28%; width: 0.75px; height: 0.75px; animation-delay: 2.1s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/35" style="top: 88%; left: 71%; width: 0.5px; height: 0.5px; animation-delay: 2.4s;"></div>
-
-        <!-- Medium sparkles (1px - 1.5px) -->
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/50" style="top: 12%; left: 35%; width: 1px; height: 1px; animation-delay: 0.15s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/45" style="top: 28%; left: 72%; width: 1.25px; height: 1.25px; animation-delay: 0.45s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/40" style="top: 48%; left: 25%; width: 1px; height: 1px; animation-delay: 0.75s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#b8860b]/50" style="top: 52%; left: 88%; width: 1.25px; height: 1.25px; animation-delay: 1.05s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/45" style="top: 72%; left: 15%; width: 1px; height: 1px; animation-delay: 1.35s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/40" style="top: 82%; left: 55%; width: 1.25px; height: 1.25px; animation-delay: 1.65s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#b8860b]/50" style="top: 5%; left: 58%; width: 1px; height: 1px; animation-delay: 1.95s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/45" style="top: 38%; left: 42%; width: 1.25px; height: 1.25px; animation-delay: 2.25s;"></div>
-
-        <!-- Larger sparkles (1.5px - 2.5px) -->
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/55" style="top: 18%; left: 65%; width: 1.5px; height: 1.5px; animation-delay: 0.2s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/50" style="top: 32%; left: 23%; width: 2px; height: 2px; animation-delay: 0.5s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/45" style="top: 62%; left: 78%; width: 1.5px; height: 1.5px; animation-delay: 0.8s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#b8860b]/55" style="top: 75%; left: 38%; width: 2px; height: 2px; animation-delay: 1.1s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/50" style="top: 25%; left: 52%; width: 1.5px; height: 1.5px; animation-delay: 1.4s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/45" style="top: 55%; left: 12%; width: 2px; height: 2px; animation-delay: 1.7s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#b8860b]/55" style="top: 92%; left: 48%; width: 1.5px; height: 1.5px; animation-delay: 2s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/50" style="top: 65%; left: 91%; width: 2px; height: 2px; animation-delay: 2.3s;"></div>
-
-        <!-- Largest sparkles (2.5px - 3px) - more subtle -->
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/60" style="top: 45%; left: 68%; width: 2.5px; height: 2.5px; animation-delay: 0.25s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#d4af37]/55" style="top: 38%; left: 15%; width: 3px; height: 3px; animation-delay: 0.55s;"></div>
-        <div class="absolute sparkle rounded-full bg-[#ffd700]/50" style="top: 85%; left: 82%; width: 2.5px; height: 2.5px; animation-delay: 0.85s;"></div>
-    </div>
+    {% include 'sparkles.html' %}
 
     <div class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl max-w-xl w-full text-center relative z-10 gold-glow">
         <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
