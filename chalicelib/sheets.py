@@ -280,6 +280,16 @@ class SheetsClient:
                 ids.append(str(raw_id))
         return ids
 
+    def get_winner_numbers(self, winners_sheet_name: Optional[str] = None) -> set:
+        """Return a set of winner numbers (as strings) from the winners sheet."""
+        winners = self.get_winners(winners_sheet_name)
+        numbers = set()
+        for w in winners:
+            raw_number = w.get('number') or w.get('Number')
+            if raw_number is not None and raw_number != '':
+                numbers.add(str(raw_number))
+        return numbers
+
 
     def get_unique_random_entry(
         self,
@@ -295,8 +305,9 @@ class SheetsClient:
             # Fallback to mock when client not initialized
             return self._get_mock_entry()
 
-        # Collect previous winner IDs
+        # Collect previous winner IDs and numbers to prevent duplicates
         prior_ids = set(self.get_winner_ids(winners_sheet_name))
+        prior_numbers = self.get_winner_numbers(winners_sheet_name)
 
         spreadsheet = self._get_spreadsheet()
         # Select worksheet
@@ -309,17 +320,24 @@ class SheetsClient:
         if not records:
             raise ValueError("Spreadsheet is empty")
 
-        # Filter out records whose id/number already won
+        # Filter out records whose id OR number already won
         eligible: List[Dict] = []
         for r in records:
             candidate_id = r.get('id', r.get('ID', None))
-            candidate_fallback = r.get('number', r.get('Number', None))
-            identifier = candidate_id if candidate_id not in (None, '') else candidate_fallback
-            if identifier is None or identifier == '':
-                # If no identifier, allow it to be drawn once
-                eligible.append(r)
-                continue
-            if str(identifier) not in prior_ids:
+            candidate_number = r.get('number', r.get('Number', None))
+            
+            # Check if ID already won
+            id_won = False
+            if candidate_id is not None and candidate_id != '':
+                id_won = str(candidate_id) in prior_ids
+            
+            # Check if number already won
+            number_won = False
+            if candidate_number is not None and candidate_number != '':
+                number_won = str(candidate_number) in prior_numbers
+            
+            # Only add if neither ID nor number has won before
+            if not id_won and not number_won:
                 eligible.append(r)
 
         if not eligible:
