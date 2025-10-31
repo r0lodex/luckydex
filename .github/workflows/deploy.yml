@@ -85,6 +85,7 @@ jobs:
           ENDPOINT=$(chalice url --stage staging)
           echo "endpoint-url=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "Deployed to: $ENDPOINT"
+          ls .chalice
           if [ -f .chalice/deployed.json ]; then
             echo "::notice title=deployed.json::deployed.json generated after deployment"
             echo ""
