@@ -56,6 +56,7 @@ jobs:
           echo "--------------------------------"
           ls .chalice/deployments
           echo "--------------------------------"
+          chalice url --stage staging
           if [ -f .chalice/deployed/staging.json ]; then
             echo "::notice title=staging.json::staging.json generated after deployment"
             echo ""
