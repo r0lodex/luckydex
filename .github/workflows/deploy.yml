@@ -13,39 +13,6 @@ env:
   AWS_REGION: ap-southeast-1
 
 jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov chalice
-
-      - name: Run linting
-        run: |
-          pip install flake8
-          flake8 app.py --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 app.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        continue-on-error: true
-
-      - name: Run tests
-        run: |
-          # pytest tests/ --cov=app --cov-report=xml
-          echo "No tests configured yet"
-        continue-on-error: true
-
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
@@ -85,12 +52,16 @@ jobs:
           ENDPOINT=$(chalice url --stage staging)
           echo "endpoint-url=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "Deployed to: $ENDPOINT"
-          ls .chalice
-          if [ -f .chalice/deployed.json ]; then
+          echo "--------------------------------"
+          ls .chalice/deployed
+          echo "--------------------------------"
+          ls .chalice/deployements
+          echo "--------------------------------"
+          if [ -f .chalice/deployed/deployed.json ]; then
             echo "::notice title=deployed.json::deployed.json generated after deployment"
             echo ""
             echo "=== .chalice/deployed.json ==="
-            cat .chalice/deployed.json
+            cat .chalice/deployed/deployed.json
             echo ""
             echo "Please commit this file to maintain deployment state."
           else
