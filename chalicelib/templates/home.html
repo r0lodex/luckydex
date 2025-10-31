@@ -13,11 +13,11 @@
         <!-- Draw Section -->
         <div class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl text-center gold-glow">
             <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
-            <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p>
+            <!-- <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p> -->
 
             <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] overflow-y-auto flex flex-col items-center justify-center transition gold-glow">
                 <div id="resultContent" class="w-full">
-                    <p class="text-white/90 text-xl text-center">Click the button below to draw a number</p>
+                    <p class="text-white/90 text-xl text-center">Draw a number</p>
                 </div>
             </div>
 
@@ -186,6 +186,11 @@
             }
         }
 
+        // Helper function to get letter for sequencing (0 -> A, 1 -> B, etc.)
+        function getSequenceLetter(index) {
+            return String.fromCharCode(65 + index); // 65 is ASCII for 'A'
+        }
+
         async function drawMultipleNumbers(count) {
             const buttons = getAllDrawButtons();
             let activeButton = null;
@@ -231,17 +236,19 @@
                         const displayNumbers = [];
                         for (let j = 0; j <= i; j++) {
                             if (j < results.length) {
-                                // Already drawn - show actual number
+                                // Already drawn - show actual number with letter prefix
+                                const letter = getSequenceLetter(j);
                                 displayNumbers.push(`
                                     <div class="text-7xl font-mono font-extrabold text-white reveal-glow" style="opacity: 1;">
-                                        ${results[j].number}
+                                        ${letter}${results[j].number}
                                     </div>
                                 `);
                             } else {
-                                // Currently drawing - show spinning number
+                                // Currently drawing - show spinning number with letter prefix
+                                const letter = getSequenceLetter(j);
                                 displayNumbers.push(`
                                     <div class="text-7xl font-mono font-extrabold text-white drawing-animation">
-                                        ${randomNumbers[numIndex % randomNumbers.length]}
+                                        ${letter}${randomNumbers[numIndex % randomNumbers.length]}
                                     </div>
                                 `);
                                 numIndex++;
@@ -284,9 +291,10 @@
                     // Dramatic reveal of the number
                     const displayNumbers = [];
                     for (let j = 0; j < results.length; j++) {
+                        const letter = getSequenceLetter(j);
                         displayNumbers.push(`
                             <div class="text-7xl font-mono font-extrabold text-white reveal-number reveal-glow">
-                                ${results[j].number}
+                                ${letter}${results[j].number}
                             </div>
                         `);
                     }
@@ -304,11 +312,14 @@
                 resultContainer.classList.remove('container-drawing');
                 resultContent.innerHTML = `
                     <div class="flex flex-wrap gap-4 justify-center items-center">
-                        ${results.map((data) => `
+                        ${results.map((data, idx) => {
+                            const letter = getSequenceLetter(idx);
+                            return `
                             <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
-                                ${data.number}
+                                ${letter}${data.number}
                             </div>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </div>
                 `;
 
@@ -343,11 +354,14 @@
                     resultContent.innerHTML = `
                         <div class="w-full">
                             <div class="flex flex-wrap gap-4 justify-center items-center mb-3">
-                                ${results.map((data) => `
+                                ${results.map((data, idx) => {
+                                    const letter = getSequenceLetter(idx);
+                                    return `
                                     <div class="text-7xl font-mono font-extrabold text-white reveal-glow">
-                                        ${data.number}
+                                        ${letter}${data.number}
                                     </div>
-                                `).join('')}
+                                `;
+                                }).join('')}
                             </div>
                             <p class="text-red-300 text-sm text-center">Failed to draw remaining numbers: ${errorMsg}</p>
                         </div>
@@ -429,8 +443,7 @@
                         const safeName = (w.name !== undefined && w.name !== null && String(w.name).trim() !== '') ? w.name : 'Winner';
                         const safeDescription = (w.description !== undefined && w.description !== null && String(w.description).trim() !== '') ? ` — ${w.description}` : '';
                         return `<li class=\"py-1.5 border-b border-[#d4af37]/20 text-white/90\">
-                            <span class=\"font-semibold font-mono text-[#ffd700]\">#${safeNumber}</span> · ${safeName}${safeDescription}
-                            ${safeId ? `<span class=\\\"text-white/50 text-sm font-mono\\\"> (ID: ${safeId})</span>` : ''}
+                            <span class=\"font-semibold font-mono text-[#ffd700]\">#${safeNumber}</span> · ${safeName}
                         </li>`;
                     }).join('');
                 }
