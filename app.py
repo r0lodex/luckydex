@@ -83,7 +83,7 @@ def luckydex():
         # Persist winner to winners sheet (best-effort)
         saved = sheets_client.save_winner(entry, winners_sheet_name)
 
-        return {
+        body = {
             'success': True,
             'id': entry['id'],
             'number': entry['number'],
@@ -93,38 +93,33 @@ def luckydex():
             'mock_data': entry.get('_mock_data', False),
             'winner_saved': saved
         }
+        status_code = 200
 
     except ValueError as e:
-        # Common logical errors (e.g., no eligible entries)
-        return Response(
-            body={
-                'success': False,
-                'error': str(e),
-                'message': 'No eligible entries remaining'
-            },
-            status_code=409,
-            headers={
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            }
-        )
+        body = {
+            'success': False,
+            'error': str(e),
+            'message': 'No eligible entries remaining'
+        }
+        status_code = 409
     except Exception as e:
-        return Response(
-            body={
-                'success': False,
-                'error': str(e),
-                'message': 'Failed to draw number from spreadsheet'
-            },
-            status_code=500,
-            headers={
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            }
-        )
+        body = {
+            'success': False,
+            'error': str(e),
+            'message': 'Failed to draw number from spreadsheet'
+        }
+        status_code = 500
+
+    return Response(
+        body=body,
+        status_code=status_code,
+        headers={
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
+    )
 
 
 @app.route('/winners', cors=True, methods=['GET'])
