@@ -38,8 +38,9 @@
 
             <div id="errorMessage" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mt-5"></div>
 
-            <p class="text-white/60 text-sm mt-5">
-                Remaining entries: <span id="remainingEntries">0</span>
+            <p class="text-white/60 text-sm mt-5 font-mono">
+                Remaining entries: <span id="remainingEntries">0</span> | 
+                <a href="#" onclick="clearDrawing(); return false;" class="text-[#d4af37] hover:text-[#ffd700] hover:underline cursor-pointer font-mono">Clear</a>
             </p>
         </div>
 
@@ -48,7 +49,7 @@
             <h2 class="text-xl font-semibold gold-text mb-4">Recent Winners</h2>
             <div id="winnersError" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-3 rounded-lg mt-2"></div>
             <div class="h-[600px] overflow-y-auto pr-2">
-                <ul id="winnersList" class="list-none pl-0 space-y-2">
+                <ul id="winnersList" class="list-none pl-0 space-y-2 text-2xl">
                     <li class="text-white/60 font-mono text-sm">No winners yet</li>
                 </ul>
             </div>
@@ -82,6 +83,18 @@
             Object.values(buttons).forEach(btn => {
                 if (btn) btn.disabled = false;
             });
+        }
+
+        function clearDrawing() {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Reset to initial state
+            resultContainer.classList.remove('container-drawing', 'animate-pulse');
+            resultContent.innerHTML = '<p class="text-white/90 text-xl text-center font-mono">Draw a number</p>';
+            errorMessage.classList.add('hidden');
+            resultContainer.style.transform = '';
         }
 
         async function drawNumber() {
