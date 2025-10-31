@@ -40,7 +40,7 @@
         <div class="absolute sparkle rounded-full bg-[#ffd700]/35" style="top: 68%; left: 63%; width: 0.5px; height: 0.5px; animation-delay: 1.8s;"></div>
         <div class="absolute sparkle rounded-full bg-[#b8860b]/40" style="top: 78%; left: 28%; width: 0.75px; height: 0.75px; animation-delay: 2.1s;"></div>
         <div class="absolute sparkle rounded-full bg-[#d4af37]/35" style="top: 88%; left: 71%; width: 0.5px; height: 0.5px; animation-delay: 2.4s;"></div>
-        
+
         <!-- Medium sparkles (1px - 1.5px) -->
         <div class="absolute sparkle rounded-full bg-[#ffd700]/50" style="top: 12%; left: 35%; width: 1px; height: 1px; animation-delay: 0.15s;"></div>
         <div class="absolute sparkle rounded-full bg-[#d4af37]/45" style="top: 28%; left: 72%; width: 1.25px; height: 1.25px; animation-delay: 0.45s;"></div>
@@ -50,7 +50,7 @@
         <div class="absolute sparkle rounded-full bg-[#ffd700]/40" style="top: 82%; left: 55%; width: 1.25px; height: 1.25px; animation-delay: 1.65s;"></div>
         <div class="absolute sparkle rounded-full bg-[#b8860b]/50" style="top: 5%; left: 58%; width: 1px; height: 1px; animation-delay: 1.95s;"></div>
         <div class="absolute sparkle rounded-full bg-[#d4af37]/45" style="top: 38%; left: 42%; width: 1.25px; height: 1.25px; animation-delay: 2.25s;"></div>
-        
+
         <!-- Larger sparkles (1.5px - 2.5px) -->
         <div class="absolute sparkle rounded-full bg-[#ffd700]/55" style="top: 18%; left: 65%; width: 1.5px; height: 1.5px; animation-delay: 0.2s;"></div>
         <div class="absolute sparkle rounded-full bg-[#d4af37]/50" style="top: 32%; left: 23%; width: 2px; height: 2px; animation-delay: 0.5s;"></div>
@@ -60,13 +60,13 @@
         <div class="absolute sparkle rounded-full bg-[#ffd700]/45" style="top: 55%; left: 12%; width: 2px; height: 2px; animation-delay: 1.7s;"></div>
         <div class="absolute sparkle rounded-full bg-[#b8860b]/55" style="top: 92%; left: 48%; width: 1.5px; height: 1.5px; animation-delay: 2s;"></div>
         <div class="absolute sparkle rounded-full bg-[#d4af37]/50" style="top: 65%; left: 91%; width: 2px; height: 2px; animation-delay: 2.3s;"></div>
-        
+
         <!-- Largest sparkles (2.5px - 3px) - more subtle -->
         <div class="absolute sparkle rounded-full bg-[#ffd700]/60" style="top: 45%; left: 68%; width: 2.5px; height: 2.5px; animation-delay: 0.25s;"></div>
         <div class="absolute sparkle rounded-full bg-[#d4af37]/55" style="top: 38%; left: 15%; width: 3px; height: 3px; animation-delay: 0.55s;"></div>
         <div class="absolute sparkle rounded-full bg-[#ffd700]/50" style="top: 85%; left: 82%; width: 2.5px; height: 2.5px; animation-delay: 0.85s;"></div>
     </div>
-    
+
     <div class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl max-w-xl w-full text-center relative z-10 gold-glow">
         <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
         <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p>
@@ -156,7 +156,7 @@
                 console.error('Error drawing number:', error);
 
                 // Show error message
-                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.textContent = `${error.message}`;
                 errorMessage.classList.remove('hidden');
 
                 // Reset result display
@@ -181,7 +181,7 @@
             winnersList.innerHTML = '<li class="flex items-center gap-2 text-white/60"><span class="w-4 h-4 border-2 border-[#d4af37]/30 border-t-[#d4af37] rounded-full animate-spin"></span> Loading winners...</li>';
 
             try {
-                const response = await fetch('{{ api_url }}/winners', {
+                const response = await fetch('winners', {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
