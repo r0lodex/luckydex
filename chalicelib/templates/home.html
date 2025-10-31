@@ -13,15 +13,20 @@
         <h1 class="text-4xl font-bold gold-text mb-2">🍀 Luckydex</h1>
         <p class="text-white/80 mb-8">Draw your lucky number from the magic spreadsheet!</p>
 
-        <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] flex flex-col items-center justify-center transition gold-glow">
-            <div id="resultContent">
-                <p class="text-white/90 text-xl">Click the button below to draw a number</p>
+        <div id="resultContainer" class="gold-gradient rounded-xl p-10 my-8 min-h-[200px] max-h-[600px] overflow-y-auto flex flex-col items-center justify-center transition gold-glow">
+            <div id="resultContent" class="w-full">
+                <p class="text-white/90 text-xl text-center">Click the button below to draw a number</p>
             </div>
         </div>
 
-        <button id="drawButton" class="gold-gradient text-white px-10 py-4 text-lg font-semibold rounded-full shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed" onclick="drawNumber()">
-            🎲 Draw Number
-        </button>
+        <div class="flex gap-3 justify-center items-center">
+            <button id="drawButton" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed" onclick="drawNumber()">
+                🎲 Draw Number
+            </button>
+            <button id="draw5Button" class="gold-gradient text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg transition will-change-transform hover:-translate-y-0.5 hover:gold-glow disabled:opacity-60 disabled:cursor-not-allowed" onclick="draw4Numbers()">
+                🎯 Draw 5 Numbers
+            </button>
+        </div>
 
         <div id="errorMessage" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-4 rounded-lg mt-5"></div>
 
@@ -41,12 +46,14 @@
     <script>
         async function drawNumber() {
             const button = document.getElementById('drawButton');
+            const draw5Button = document.getElementById('draw5Button');
             const resultContainer = document.getElementById('resultContainer');
             const resultContent = document.getElementById('resultContent');
             const errorMessage = document.getElementById('errorMessage');
 
-            // Disable button and show loading state
+            // Disable buttons and show loading state
             button.disabled = true;
+            draw5Button.disabled = true;
             button.textContent = '🎲 Drawing...';
             resultContainer.classList.add('animate-pulse');
             errorMessage.classList.add('hidden');
@@ -77,11 +84,13 @@
 
                 // Display the result
                 resultContent.innerHTML = `
-                    <div class="text-5xl font-extrabold text-white mb-2">${data.number}</div>
-                    <div class="text-white/90 text-lg">${data.name || 'Lucky Number'}</div>
-                    ${data.description ? `<div class=\"text-white/80 text-sm mt-2\">${data.description}</div>` : ''}
-                    <div class="text-white/80 text-xs mt-4">
-                        ID: ${data.id} | Total entries: ${data.total_entries || 'N/A'}
+                    <div class="text-center">
+                        <div class="text-5xl font-extrabold text-white mb-2">${data.number}</div>
+                        <div class="text-white/90 text-lg">${data.name || 'Lucky Number'}</div>
+                        ${data.description ? `<div class=\"text-white/80 text-sm mt-2\">${data.description}</div>` : ''}
+                        <div class="text-white/80 text-xs mt-4">
+                            ID: ${data.id} | Total entries: ${data.total_entries || 'N/A'}
+                        </div>
                     </div>
                 `;
 
@@ -104,9 +113,110 @@
                 // Reset result display
                 resultContent.innerHTML = '<p class="text-white/70 text-xl">Failed to draw number</p>';
             } finally {
-                // Re-enable button and remove loading state
+                // Re-enable buttons and remove loading state
                 button.disabled = false;
+                draw5Button.disabled = false;
                 button.textContent = '🎲 Draw Number';
+                resultContainer.classList.remove('animate-pulse');
+            }
+        }
+
+        async function draw4Numbers() {
+            const button = document.getElementById('drawButton');
+            const draw5Button = document.getElementById('draw5Button');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Disable buttons and show loading state
+            button.disabled = true;
+            draw5Button.disabled = true;
+            draw5Button.textContent = '🎯 Drawing 4...';
+            resultContainer.classList.add('animate-pulse');
+            errorMessage.classList.add('hidden');
+
+            // Show spinner with progress
+            resultContent.innerHTML = '<div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full border-4 border-white/30 border-t-white animate-spin"></div><p class="text-white/80 text-sm">Drawing numbers...</p></div>';
+
+            const results = [];
+            let hasError = false;
+            let errorMsg = '';
+
+            try {
+                // Draw 5 numbers sequentially to ensure uniqueness
+                for (let i = 0; i < 4; i++) {
+                    // Update progress
+                    resultContent.innerHTML = `<div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full border-4 border-white/30 border-t-white animate-spin"></div><p class="text-white/80 text-sm">Drawing ${i + 1} of 5...</p></div>`;
+
+                    const response = await fetch('luckydex', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (_) {
+                        data = null;
+                    }
+
+                    if (!response.ok || (data && data.success === false)) {
+                        const message = (data && (data.message || data.error)) ? `${data.message || data.error}` : `HTTP ${response.status}`;
+                        throw new Error(message);
+                    }
+
+                    results.push(data);
+                }
+
+                // Display all 5 results - just numbers
+                resultContent.innerHTML = `
+                    <div class="justify-center items-center gap-4">
+                        ${results.map((data) => `
+                            <div class="text-4xl font-extrabold text-white">${data.number}</div>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Add success animation
+                resultContainer.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    resultContainer.style.transform = 'scale(1)';
+                }, 200);
+
+                // Refresh winners after successful draws
+                fetchWinners();
+
+            } catch (error) {
+                console.error('Error drawing 4 numbers:', error);
+                hasError = true;
+                errorMsg = error.message;
+
+                // Show error message
+                errorMessage.textContent = `Error drawing numbers: ${errorMsg}`;
+                errorMessage.classList.remove('hidden');
+
+                // If we got some results, show them, otherwise show error
+                if (results.length > 0) {
+                    resultContent.innerHTML = `
+                        <div class="w-full">
+                            <div class="flex justify-between items-center gap-4 mb-3">
+                                ${results.map((data) => `
+                                    <div class="text-4xl font-extrabold text-white">${data.number}</div>
+                                `).join('')}
+                            </div>
+                            <p class="text-red-300 text-sm text-center">Failed to draw remaining numbers: ${errorMsg}</p>
+                        </div>
+                    `;
+                } else {
+                    resultContent.innerHTML = '<p class="text-white text-xl text-center">Failed to draw numbers</p>';
+                }
+            } finally {
+                // Re-enable buttons and remove loading state
+                button.disabled = false;
+                draw5Button.disabled = false;
+                draw5Button.textContent = '🎯 Draw 4 Numbers';
                 resultContainer.classList.remove('animate-pulse');
             }
         }
