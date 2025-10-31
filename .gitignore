@@ -122,7 +122,7 @@ dmypy.json
 .chalice/deployments/
 .chalice/venv/
 .chalice/.chalice.db
-.chalice/deployed/
+
 
 # IDEs
 .vscode/
