@@ -45,11 +45,11 @@
 
         <!-- Winners Section -->
         <div id="winnersSection" class="bg-[#1a1a1a] border border-[#d4af37]/30 rounded-2xl p-10 shadow-2xl relative z-10 gold-glow">
-            <h2 class="text-xl font-semibold gold-text mb-4 text-center">🏆 Recent Winners</h2>
+            <h2 class="text-xl font-semibold gold-text mb-4">Recent Winners</h2>
             <div id="winnersError" class="hidden bg-red-900/30 border border-red-700/50 text-red-300 p-3 rounded-lg mt-2"></div>
             <div class="h-[600px] overflow-y-auto pr-2">
                 <ul id="winnersList" class="list-none pl-0 space-y-2">
-                    <li class="text-white/60">No winners yet. Draw to see the first winner!</li>
+                    <li class="text-white/60 font-mono text-sm">No winners yet</li>
                 </ul>
             </div>
         </div>
@@ -160,8 +160,10 @@
                     window.totalEntries = data.total_entries;
                 }
 
-                // Refresh winners and update remaining entries
-                fetchWinners();
+                // Display current draw in winners list (no alphabet for single draw)
+                displayCurrentDraw([data], false);
+
+                // Update remaining entries
                 updateRemainingEntries();
 
             } catch (error) {
@@ -199,7 +201,7 @@
                 5: { btn: buttons.drawFive, text: 'Draw Five (5)' },
                 10: { btn: buttons.drawTen, text: 'Draw Ten (10)' }
             };
-            
+
             if (buttonLabels[count]) {
                 activeButton = buttonLabels[count].btn;
             }
@@ -334,8 +336,10 @@
                     window.totalEntries = results[0].total_entries;
                 }
 
-                // Refresh winners and update remaining entries
-                fetchWinners();
+                // Display current draw in winners list with alphabet prefix (multiple draws)
+                displayCurrentDraw(results, true);
+
+                // Update remaining entries
                 updateRemainingEntries();
 
             } catch (error) {
@@ -366,6 +370,9 @@
                             <p class="text-red-300 text-sm text-center">Failed to draw remaining numbers: ${errorMsg}</p>
                         </div>
                     `;
+
+                    // Display partial results in winners list with alphabet prefix
+                    displayCurrentDraw(results, true);
                 } else {
                     resultContent.innerHTML = '<p class="text-white text-xl text-center">Failed to draw numbers</p>';
                 }
@@ -403,65 +410,46 @@
             }
         }
 
-        async function fetchWinners() {
-            const winnersSection = document.getElementById('winnersSection');
+        // Display current draw session in winners list
+        function displayCurrentDraw(results, showAlphabet = false) {
             const winnersList = document.getElementById('winnersList');
+
+            if (!results || results.length === 0) {
+                winnersList.innerHTML = '<li class="text-white/60 font-mono text-sm">No winners yet</li>';
+                return;
+            }
+
+            winnersList.innerHTML = results.map((w, idx) => {
+                const safeNumber = (w.number !== undefined && w.number !== null) ? w.number : '';
+                const safeName = (w.name !== undefined && w.name !== null && String(w.name).trim() !== '') ? w.name : 'Winner';
+                const safeDescription = (w.description !== undefined && w.description !== null && String(w.description).trim() !== '') ? String(w.description).trim() : '';
+
+                // Add alphabet prefix if applicable
+                const prefix = showAlphabet ? `${getSequenceLetter(idx)} ` : '';
+
+                return `<li class=\"py-1.5 border-b border-[#d4af37]/20 text-white/90\">
+                    <span class=\"font-semibold font-mono text-[#ffd700]\">${prefix} ${safeNumber}</span> · ${safeName}${safeDescription ? ` — ${safeDescription}` : ''}
+                </li>`;
+            }).join('');
+        }
+
+        async function fetchWinners() {
+            // This function is kept for compatibility but no longer directly updates the list
+            // The list is now managed by displayCurrentDraw()
+            const winnersSection = document.getElementById('winnersSection');
             const winnersError = document.getElementById('winnersError');
             winnersError.classList.add('hidden');
             winnersError.textContent = '';
 
-            // Loading state
-            winnersSection.classList.add('animate-pulse');
-            winnersList.innerHTML = '<li class="flex items-center gap-2 text-white/60"><span class="w-4 h-4 border-2 border-[#d4af37]/30 border-t-[#d4af37] rounded-full animate-spin"></span> Loading winners...</li>';
-
-            try {
-                const response = await fetch('winners', {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                let data;
-                try {
-                    data = await response.json();
-                } catch (_) {
-                    data = null;
-                }
-
-                if (!response.ok || (data && data.success === false)) {
-                    const message = (data && (data.message || data.error)) ? `${data.message || data.error}` : `HTTP ${response.status}`;
-                    throw new Error(message);
-                }
-
-                const winners = data && Array.isArray(data.winners) ? data.winners : [];
-
-                if (winners.length === 0) {
-                    winnersList.innerHTML = '<li class="text-white/60">No winners yet. Draw to see the first winner!</li>';
-                } else {
-                    winnersList.innerHTML = winners.map((w, idx) => {
-                        const safeId = (w.id !== undefined && w.id !== null) ? w.id : '';
-                        const safeNumber = (w.number !== undefined && w.number !== null) ? w.number : '';
-                        const safeName = (w.name !== undefined && w.name !== null && String(w.name).trim() !== '') ? w.name : 'Winner';
-                        const safeDescription = (w.description !== undefined && w.description !== null && String(w.description).trim() !== '') ? ` — ${w.description}` : '';
-                        return `<li class=\"py-1.5 border-b border-[#d4af37]/20 text-white/90\">
-                            <span class=\"font-semibold font-mono text-[#ffd700]\">#${safeNumber}</span> · ${safeName}
-                        </li>`;
-                    }).join('');
-                }
-
-                // Update remaining entries after fetching winners
-                updateRemainingEntries();
-            } catch (error) {
-                console.error('Error fetching winners:', error);
-                winnersError.textContent = `Could not load winners: ${error.message}`;
-                winnersError.classList.remove('hidden');
-            } finally {
-                winnersSection.classList.remove('animate-pulse');
-            }
+            // Just update remaining entries, don't change the display
+            updateRemainingEntries();
+            winnersSection.classList.remove('animate-pulse');
         }
 
         // Load winners and remaining entries on page load
         window.addEventListener('load', () => {
-            fetchWinners();
+            // Initialize with empty list
+            displayCurrentDraw([], false);
             updateRemainingEntries();
         });
     </script>
