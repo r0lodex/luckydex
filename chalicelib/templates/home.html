@@ -246,61 +246,103 @@
             try {
                 // Draw numbers sequentially to ensure uniqueness
                 for (let i = 0; i < count; i++) {
-                    // Dramatic drawing animation for each number
-                    drawInterval = setInterval(() => {
-                        const displayNumbers = [];
-                        for (let j = 0; j <= i; j++) {
-                            if (j < results.length) {
-                                // Already drawn - show actual number with letter prefix
-                                const letter = getSequenceLetter(j);
-                                displayNumbers.push(`
-                                    <div class="text-7xl font-mono font-extrabold text-white reveal-glow" style="opacity: 1;">
-                                        ${letter} ${results[j].number}
-                                    </div>
-                                `);
-                            } else {
-                                // Currently drawing - show spinning number with letter prefix
-                                const letter = getSequenceLetter(j);
-                                displayNumbers.push(`
-                                    <div class="text-7xl font-mono font-extrabold text-white drawing-animation">
-                                        ${letter} ${randomNumbers[numIndex % randomNumbers.length]}
-                                    </div>
-                                `);
-                                numIndex++;
+                    let data = null;
+                    let retryCount = 0;
+                    const maxRetries = 10;
+                    
+                    // Retry loop to ensure we get a unique number
+                    while (retryCount <= maxRetries) {
+                        // Dramatic drawing animation for each number
+                        drawInterval = setInterval(() => {
+                            const displayNumbers = [];
+                            for (let j = 0; j <= i; j++) {
+                                if (j < results.length) {
+                                    // Already drawn - show actual number with letter prefix
+                                    const letter = getSequenceLetter(j);
+                                    displayNumbers.push(`
+                                        <div class="text-7xl font-mono font-extrabold text-white reveal-glow" style="opacity: 1;">
+                                            ${letter} ${results[j].number}
+                                        </div>
+                                    `);
+                                } else {
+                                    // Currently drawing - show spinning number with letter prefix
+                                    const letter = getSequenceLetter(j);
+                                    displayNumbers.push(`
+                                        <div class="text-7xl font-mono font-extrabold text-white drawing-animation">
+                                            ${letter} ${randomNumbers[numIndex % randomNumbers.length]}
+                                        </div>
+                                    `);
+                                    numIndex++;
+                                }
                             }
+                            resultContent.innerHTML = `
+                                <div class="flex flex-wrap gap-4 justify-center items-center w-full">
+                                    ${displayNumbers.join('')}
+                                </div>
+                            `;
+                        }, 100);
+
+                        // Wait a bit for dramatic effect before fetching
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
+                        // Build query params to exclude already-drawn numbers in this session
+                        const excludeIds = results.map(r => r.id).filter(id => id && id !== '');
+                        const excludeNumbers = results.map(r => r.number).filter(num => num && num !== '');
+                        
+                        let url = 'luckydex';
+                        const params = new URLSearchParams();
+                        if (excludeIds.length > 0) {
+                            params.append('exclude_ids', excludeIds.join(','));
                         }
-                        resultContent.innerHTML = `
-                            <div class="flex flex-wrap gap-4 justify-center items-center w-full">
-                                ${displayNumbers.join('')}
-                            </div>
-                        `;
-                    }, 100);
-
-                    // Wait a bit for dramatic effect before fetching
-                    await new Promise(resolve => setTimeout(resolve, 800));
-
-                    const response = await fetch('luckydex', {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
+                        if (excludeNumbers.length > 0) {
+                            params.append('exclude_numbers', excludeNumbers.join(','));
                         }
-                    });
+                        if (params.toString()) {
+                            url += '?' + params.toString();
+                        }
 
-                    let data;
-                    try {
-                        data = await response.json();
-                    } catch (_) {
-                        data = null;
-                    }
+                        const response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
 
-                    if (!response.ok || (data && data.success === false)) {
+                        try {
+                            data = await response.json();
+                        } catch (_) {
+                            data = null;
+                        }
+
+                        if (!response.ok || (data && data.success === false)) {
+                            clearInterval(drawInterval);
+                            const message = (data && (data.message || data.error)) ? `${data.message || data.error}` : `HTTP ${response.status}`;
+                            throw new Error(message);
+                        }
+
+                        // Check for duplicate in current session
+                        const isDuplicate = results.some(r => 
+                            (r.id && data.id && String(r.id) === String(data.id)) || 
+                            (r.number && data.number && String(r.number) === String(data.number))
+                        );
+
                         clearInterval(drawInterval);
-                        const message = (data && (data.message || data.error)) ? `${data.message || data.error}` : `HTTP ${response.status}`;
-                        throw new Error(message);
+
+                        if (isDuplicate) {
+                            retryCount++;
+                            if (retryCount > maxRetries) {
+                                throw new Error('Unable to get unique number after multiple retries');
+                            }
+                            // Brief pause before retry
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                            continue; // Retry
+                        }
+
+                        // Got unique number, break out of retry loop
+                        break;
                     }
 
-                    // Clear the drawing animation for this number
-                    clearInterval(drawInterval);
+                    // Add the unique result
                     results.push(data);
 
                     // Dramatic reveal of the number

@@ -294,10 +294,18 @@ class SheetsClient:
     def get_unique_random_entry(
         self,
         sheet_name: Optional[str] = None,
-        winners_sheet_name: Optional[str] = None
+        winners_sheet_name: Optional[str] = None,
+        exclude_ids: Optional[List[str]] = None,
+        exclude_numbers: Optional[List[str]] = None
     ) -> Dict:
         """
         Get a random entry that has not won before.
+
+        Args:
+            sheet_name: Name of the sheet to read from
+            winners_sheet_name: Name of the winners sheet
+            exclude_ids: List of IDs to exclude (for session uniqueness)
+            exclude_numbers: List of numbers to exclude (for session uniqueness)
 
         Raises ValueError if no eligible entries remain.
         """
@@ -305,9 +313,29 @@ class SheetsClient:
             # Fallback to mock when client not initialized
             return self._get_mock_entry()
 
-        # Collect previous winner IDs and numbers to prevent duplicates
-        prior_ids = set(self.get_winner_ids(winners_sheet_name))
-        prior_numbers = self.get_winner_numbers(winners_sheet_name)
+        # Get all winners from the winners sheet
+        winners = self.get_winners(winners_sheet_name)
+
+        # Build sets of all IDs and numbers that have already won (normalized as strings)
+        prior_ids = set()
+        prior_numbers = set()
+
+        for winner in winners:
+            # Get ID from winner record
+            winner_id = winner.get('id') or winner.get('ID')
+            if winner_id is not None and winner_id != '':
+                prior_ids.add(str(winner_id).strip())
+
+            # Get number from winner record
+            winner_number = winner.get('number') or winner.get('Number')
+            if winner_number is not None and winner_number != '':
+                prior_numbers.add(str(winner_number).strip())
+
+        # Add session exclusions (IDs and numbers drawn in current session)
+        if exclude_ids:
+            prior_ids.update(str(id).strip() for id in exclude_ids if id and id != '')
+        if exclude_numbers:
+            prior_numbers.update(str(num).strip() for num in exclude_numbers if num and num != '')
 
         spreadsheet = self._get_spreadsheet()
         # Select worksheet
@@ -325,17 +353,17 @@ class SheetsClient:
         for r in records:
             candidate_id = r.get('id', r.get('ID', None))
             candidate_number = r.get('number', r.get('Number', None))
-            
+
+            # Normalize values for comparison
+            candidate_id_str = str(candidate_id).strip() if candidate_id is not None and candidate_id != '' else None
+            candidate_number_str = str(candidate_number).strip() if candidate_number is not None and candidate_number != '' else None
+
             # Check if ID already won
-            id_won = False
-            if candidate_id is not None and candidate_id != '':
-                id_won = str(candidate_id) in prior_ids
-            
+            id_won = candidate_id_str is not None and candidate_id_str in prior_ids
+
             # Check if number already won
-            number_won = False
-            if candidate_number is not None and candidate_number != '':
-                number_won = str(candidate_number) in prior_numbers
-            
+            number_won = candidate_number_str is not None and candidate_number_str in prior_numbers
+
             # Only add if neither ID nor number has won before
             if not id_won and not number_won:
                 eligible.append(r)

@@ -72,13 +72,36 @@ def luckydex():
     Luckydex endpoint that draws a random entry from a Google Spreadsheet.
     The spreadsheet should have columns: id, number, name, description
     Returns a random row with the number and associated data.
+    
+    Query parameters:
+    - exclude_ids: Comma-separated list of IDs to exclude (for session uniqueness)
+    - exclude_numbers: Comma-separated list of numbers to exclude (for session uniqueness)
     """
     try:
         sheet_name = os.environ.get('GOOGLE_SHEET_NAME')
 
-        # Get a unique random entry (not previously a winner)
+        # Get excluded IDs and numbers from query parameters (for current session)
+        request = app.current_request
+        exclude_ids = []
+        exclude_numbers = []
+        
+        if request and request.query_params:
+            exclude_ids_str = request.query_params.get('exclude_ids', '')
+            exclude_numbers_str = request.query_params.get('exclude_numbers', '')
+            
+            if exclude_ids_str:
+                exclude_ids = [id.strip() for id in exclude_ids_str.split(',') if id.strip()]
+            if exclude_numbers_str:
+                exclude_numbers = [num.strip() for num in exclude_numbers_str.split(',') if num.strip()]
+
+        # Get a unique random entry (not previously a winner and not in current session)
         winners_sheet_name = os.environ.get('GOOGLE_WINNERS_SHEET_NAME')
-        entry = sheets_client.get_unique_random_entry(sheet_name, winners_sheet_name)
+        entry = sheets_client.get_unique_random_entry(
+            sheet_name, 
+            winners_sheet_name,
+            exclude_ids=exclude_ids,
+            exclude_numbers=exclude_numbers
+        )
 
         # Persist winner to winners sheet (best-effort)
         saved = sheets_client.save_winner(entry, winners_sheet_name)
