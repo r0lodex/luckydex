@@ -185,7 +185,7 @@ class SheetsClient:
     def save_winner(self, entry: Dict, winners_sheet_name: Optional[str] = None) -> bool:
         """
         Save a winner entry to the winners sheet.
-        
+
         Sheet structure:
         - Column A (index 0): timestamp
         - Column B (index 1): id
@@ -220,33 +220,42 @@ class SheetsClient:
                 worksheet = spreadsheet.add_worksheet(title=winners_name, rows=1000, cols=10)
                 # Set headers: A=timestamp, B=id, C=number, D=name, E=description
                 worksheet.append_row(['timestamp', 'id', 'number', 'name', 'description'])
-            
+
             # Check if this entry was already saved (prevent duplicate writes)
+            # Check ALL winners, not just recent ones
             entry_id = str(entry.get('id', '')).strip()
             entry_number = str(entry.get('number', '')).strip()
             
-            # Get all winners to check for duplicates
+            # Build sets of all existing IDs and numbers for efficient lookup
             existing_winners = worksheet.get_all_records()
-            for winner in existing_winners[-50:]:  # Check last 50 entries
+            existing_ids = set()
+            existing_numbers = set()
+            
+            for winner in existing_winners:
                 winner_id = str(winner.get('id', '')).strip()
                 winner_number = str(winner.get('number', '')).strip()
-                # If ID matches OR number matches, this was already saved
-                if (entry_id and winner_id and entry_id == winner_id) or \
-                   (entry_number and winner_number and entry_number == winner_number):
-                    # Already saved, skip duplicate write
-                    return True
+                if winner_id:
+                    existing_ids.add(winner_id)
+                if winner_number:
+                    existing_numbers.add(winner_number)
             
+            # Check if this entry already exists (by ID OR by number)
+            if (entry_id and entry_id in existing_ids) or (entry_number and entry_number in existing_numbers):
+                # Already saved, skip duplicate write
+                print(f"Duplicate entry detected - ID: {entry_id}, Number: {entry_number} - skipping save")
+                return True
+
             # Find the next empty row in column A (skip header row 1)
             # Get all values in column A to find the last non-empty row
             col_a_values = worksheet.col_values(1)  # Column A is index 1
             next_row = len(col_a_values) + 1  # Next row after last non-empty cell in column A
-            
+
             # If sheet only has header, start at row 2
             if next_row == 2 and col_a_values and col_a_values[0].lower() in ['time', 'timestamp']:
                 next_row = 2
             elif next_row < 2:
                 next_row = 2
-            
+
             # Prepare the row data - Column A=timestamp, B=id, C=number, D=name, E=description
             myt = pytz.timezone('Asia/Kuala_Lumpur')
             timestamp = datetime.now(myt).strftime('%Y-%m-%d %H:%M:%S')
@@ -257,7 +266,7 @@ class SheetsClient:
                 entry.get('name', ''),        # Column D
                 entry.get('description', ''), # Column E
             ]
-            
+
             # Write to specific row and columns A-E using range notation
             range_name = f'A{next_row}:E{next_row}'
             worksheet.update(range_name, [row_data], value_input_option='RAW')
@@ -270,7 +279,7 @@ class SheetsClient:
     def get_winners(self, winners_sheet_name: Optional[str] = None) -> List[Dict]:
         """
         Return all winners from the winners sheet, sorted by timestamp (latest first).
-        
+
         Sheet structure (READ ONLY - never writes):
         - Column A: timestamp
         - Column B: id
@@ -297,7 +306,7 @@ class SheetsClient:
             # Only read from the worksheet - never create or modify
             spreadsheet = self._get_spreadsheet()
             worksheet = spreadsheet.worksheet(winners_name)
-            
+
             # Get all records - assumes headers exist: timestamp, id, number, name, description
             # Column A=timestamp, B=id, C=number, D=name, E=description
             records = worksheet.get_all_records()
@@ -322,7 +331,7 @@ class SheetsClient:
     def get_winner_ids(self, winners_sheet_name: Optional[str] = None) -> List[str]:
         """
         Return a list of winner IDs (as strings) from the winners sheet.
-        
+
         Reads from Column B (id) of the winners sheet.
         """
         winners = self.get_winners(winners_sheet_name)
@@ -347,6 +356,42 @@ class SheetsClient:
             if raw_number is not None and raw_number != '':
                 numbers.add(str(raw_number))
         return numbers
+
+    def entry_exists_in_winners(self, entry: Dict, winners_sheet_name: Optional[str] = None) -> bool:
+        """
+        Check if an entry already exists in the winners sheet.
+        
+        Returns True if the entry's ID OR number already exists in winners.
+        
+        Args:
+            entry: Dict with 'id' and/or 'number' keys
+            winners_sheet_name: Target sheet name for winners (defaults to env or 'Winners')
+            
+        Returns:
+            True if entry exists (by ID or number), False otherwise
+        """
+        if not self.client:
+            return False
+        
+        entry_id = str(entry.get('id', '')).strip()
+        entry_number = str(entry.get('number', '')).strip()
+        
+        if not entry_id and not entry_number:
+            return False
+        
+        # Get all existing winners
+        winners = self.get_winners(winners_sheet_name)
+        
+        # Check if ID or number matches any winner
+        for winner in winners:
+            winner_id = str(winner.get('id', '')).strip()
+            winner_number = str(winner.get('number', '')).strip()
+            
+            if (entry_id and winner_id and entry_id == winner_id) or \
+               (entry_number and winner_number and entry_number == winner_number):
+                return True
+        
+        return False
 
 
     def get_unique_random_entry(
@@ -429,10 +474,21 @@ class SheetsClient:
         if not eligible:
             raise ValueError("No eligible entries remaining")
 
+        # Select a random entry from eligible ones
         chosen = random.choice(eligible)
+        chosen_id = str(chosen.get('id', chosen.get('ID', ''))).strip()
+        chosen_number = str(chosen.get('number', chosen.get('Number', ''))).strip()
+        
+        # Final verification: Double-check the chosen entry is truly unique
+        # This catches any race conditions or timing issues
+        if chosen_id and chosen_id in prior_ids:
+            raise ValueError(f"Selected entry with ID '{chosen_id}' already exists in winners - retry needed")
+        if chosen_number and chosen_number in prior_numbers:
+            raise ValueError(f"Selected entry with number '{chosen_number}' already exists in winners - retry needed")
+        
         return {
-            'id': chosen.get('id', chosen.get('ID', '')),
-            'number': chosen.get('number', chosen.get('Number', '')),
+            'id': chosen_id if chosen_id else '',
+            'number': chosen_number if chosen_number else '',
             'name': chosen.get('name', chosen.get('Name', '')),
             'description': chosen.get('description', chosen.get('Description', '')),
             'total_entries': len(records),

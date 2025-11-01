@@ -103,7 +103,13 @@ def luckydex():
             exclude_numbers=exclude_numbers
         )
 
+        # Extra verification: Double-check entry doesn't exist before saving
+        # This provides an additional safeguard against race conditions
+        if sheets_client.entry_exists_in_winners(entry, winners_sheet_name):
+            raise ValueError(f"Entry already exists in winners - ID: {entry.get('id')}, Number: {entry.get('number')}")
+
         # Persist winner to winners sheet (best-effort)
+        # save_winner() also performs its own duplicate check as a final safeguard
         saved = sheets_client.save_winner(entry, winners_sheet_name)
 
         body = {
