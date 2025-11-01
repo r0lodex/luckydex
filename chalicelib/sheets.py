@@ -185,6 +185,13 @@ class SheetsClient:
     def save_winner(self, entry: Dict, winners_sheet_name: Optional[str] = None) -> bool:
         """
         Save a winner entry to the winners sheet.
+        
+        Sheet structure:
+        - Column A (index 0): timestamp
+        - Column B (index 1): id
+        - Column C (index 2): number
+        - Column D (index 3): name
+        - Column E (index 4): description
 
         Args:
             entry: Dict with keys id, number, name, description
@@ -203,26 +210,57 @@ class SheetsClient:
             or 'Winners'
         )
 
-        headers = [
-            'timestamp',
-            'id',
-            'number',
-            'name',
-            'description',
-        ]
-
         try:
-            worksheet = self._get_or_create_worksheet(winners_name, headers=headers)
+            # Get the worksheet (don't create if it doesn't exist - assume it's already set up)
+            spreadsheet = self._get_spreadsheet()
+            try:
+                worksheet = spreadsheet.worksheet(winners_name)
+            except Exception:
+                # If sheet doesn't exist, create it with proper headers
+                worksheet = spreadsheet.add_worksheet(title=winners_name, rows=1000, cols=10)
+                # Set headers: A=timestamp, B=id, C=number, D=name, E=description
+                worksheet.append_row(['timestamp', 'id', 'number', 'name', 'description'])
+            
+            # Check if this entry was already saved (prevent duplicate writes)
+            entry_id = str(entry.get('id', '')).strip()
+            entry_number = str(entry.get('number', '')).strip()
+            
+            # Get all winners to check for duplicates
+            existing_winners = worksheet.get_all_records()
+            for winner in existing_winners[-50:]:  # Check last 50 entries
+                winner_id = str(winner.get('id', '')).strip()
+                winner_number = str(winner.get('number', '')).strip()
+                # If ID matches OR number matches, this was already saved
+                if (entry_id and winner_id and entry_id == winner_id) or \
+                   (entry_number and winner_number and entry_number == winner_number):
+                    # Already saved, skip duplicate write
+                    return True
+            
+            # Find the next empty row in column A (skip header row 1)
+            # Get all values in column A to find the last non-empty row
+            col_a_values = worksheet.col_values(1)  # Column A is index 1
+            next_row = len(col_a_values) + 1  # Next row after last non-empty cell in column A
+            
+            # If sheet only has header, start at row 2
+            if next_row == 2 and col_a_values and col_a_values[0].lower() in ['time', 'timestamp']:
+                next_row = 2
+            elif next_row < 2:
+                next_row = 2
+            
+            # Prepare the row data - Column A=timestamp, B=id, C=number, D=name, E=description
             myt = pytz.timezone('Asia/Kuala_Lumpur')
             timestamp = datetime.now(myt).strftime('%Y-%m-%d %H:%M:%S')
-            row = [
-                timestamp,
-                entry.get('id', ''),
-                entry.get('number', ''),
-                entry.get('name', ''),
-                entry.get('description', ''),
+            row_data = [
+                timestamp,                    # Column A
+                entry.get('id', ''),          # Column B
+                entry.get('number', ''),      # Column C
+                entry.get('name', ''),        # Column D
+                entry.get('description', ''), # Column E
             ]
-            worksheet.append_row(row)
+            
+            # Write to specific row and columns A-E using range notation
+            range_name = f'A{next_row}:E{next_row}'
+            worksheet.update(range_name, [row_data], value_input_option='RAW')
             return True
         except Exception as e:
             print(f"Error saving winner to Google Sheets: {e}")
@@ -232,6 +270,13 @@ class SheetsClient:
     def get_winners(self, winners_sheet_name: Optional[str] = None) -> List[Dict]:
         """
         Return all winners from the winners sheet, sorted by timestamp (latest first).
+        
+        Sheet structure (READ ONLY - never writes):
+        - Column A: timestamp
+        - Column B: id
+        - Column C: number
+        - Column D: name
+        - Column E: description
 
         Args:
             winners_sheet_name: Target sheet name for winners (defaults to env or 'Winners')
@@ -249,13 +294,17 @@ class SheetsClient:
         )
 
         try:
-            worksheet = self._get_or_create_worksheet(winners_name)
-            # If headers exist, get_all_records returns list[dict]
+            # Only read from the worksheet - never create or modify
+            spreadsheet = self._get_spreadsheet()
+            worksheet = spreadsheet.worksheet(winners_name)
+            
+            # Get all records - assumes headers exist: timestamp, id, number, name, description
+            # Column A=timestamp, B=id, C=number, D=name, E=description
             records = worksheet.get_all_records()
 
             # Sort by timestamp in descending order (latest first)
-            # Handle different possible timestamp field names
             def get_timestamp(record: Dict) -> str:
+                # Column A is timestamp
                 ts = record.get('timestamp') or record.get('Timestamp') or record.get('time') or ''
                 return ts
 
@@ -265,23 +314,32 @@ class SheetsClient:
 
             return records
         except Exception as e:
+            # If sheet doesn't exist, return empty list (don't create it)
             print(f"Error reading winners from Google Sheets: {e}")
             return []
 
 
     def get_winner_ids(self, winners_sheet_name: Optional[str] = None) -> List[str]:
-        """Return a list of winner IDs (as strings) from the winners sheet."""
+        """
+        Return a list of winner IDs (as strings) from the winners sheet.
+        
+        Reads from Column B (id) of the winners sheet.
+        """
         winners = self.get_winners(winners_sheet_name)
         ids: List[str] = []
         for w in winners:
-            # Normalize id; fall back to number if id missing
+            # Column B is 'id' - normalize and fall back to number (Column C) if id missing
             raw_id = w.get('id') or w.get('ID') or w.get('number') or w.get('Number')
             if raw_id is not None and raw_id != '':
                 ids.append(str(raw_id))
         return ids
 
     def get_winner_numbers(self, winners_sheet_name: Optional[str] = None) -> set:
-        """Return a set of winner numbers (as strings) from the winners sheet."""
+        """
+        Return a set of winner numbers (as strings) from the winners sheet.
+        
+        Reads from Column C (number) of the winners sheet.
+        """
         winners = self.get_winners(winners_sheet_name)
         numbers = set()
         for w in winners:
